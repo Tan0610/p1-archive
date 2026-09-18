@@ -65,15 +65,73 @@ export async function quoteBuy(bee: Bee, sizeMb: number, days: number): Promise<
   return { size: size.toFormattedString(), duration: duration.represent(), costXbzz: cost.toSignificantDigits(4) }
 }
 
-/** SPENDS xBZZ. Only ever called from an explicit, confirmed user action. */
+/**
+ * SPENDS xBZZ. Only ever called from an explicit, confirmed user action.
+ *
+ * Returns the new batch id as soon as the node reports the purchase, WITHOUT
+ * waiting for the batch to become usable. bee-js would otherwise block until
+ * usable and throw on its timeout: xBZZ spent, id never returned. The caller
+ * prints and saves the id first (local-state.ts), then calls waitUntilUsable.
+ */
 export async function buyBatch(bee: Bee, sizeMb: number, days: number, label = DEFAULT_LABEL): Promise<string> {
   const id = await bee.storage.buy(Size.fromMegabytes(sizeMb), Duration.fromDays(days), {
     label,
     immutableFlag: false,
-    waitForUsable: true,
-    waitForUsableTimeout: 600_000,
+    waitForUsable: false,
   })
   return id.toHex()
+}
+
+export class BatchNotUsableYetError extends Error {
+  constructor(
+    readonly batchId: string,
+    readonly waitedSeconds: number,
+  ) {
+    super(
+      `Batch ${batchId} is bought but the node does not call it usable yet (waited ${Math.round(waitedSeconds / 60)} min). ` +
+        `Nothing is lost: the id is saved in .state/last-batch.txt. Check again later with: npm run archive -- status --batch ${batchId}`,
+    )
+    this.name = 'BatchNotUsableYetError'
+  }
+}
+
+export interface WaitOptions {
+  /** Give up after this long. Default 15 minutes. */
+  timeoutMs?: number
+  /** Poll interval. Default 10 s. */
+  everyMs?: number
+  /** Called after each poll that found the batch not usable yet. */
+  onWait?: (waitedSeconds: number, reason: string) => void
+  /** For tests. */
+  sleep?: (ms: number) => Promise<void>
+  now?: () => number
+}
+
+/**
+ * A new batch becomes usable once the node has seen enough block confirmations
+ * (usually 1 to 5 minutes on Gnosis). Polls GET /stamps/{id}; a 404 or a 5xx
+ * there only means the node has not caught up yet, so it keeps polling.
+ * Throws BatchNotUsableYetError (which carries the id) on timeout.
+ */
+export async function waitUntilUsable(bee: Bee, batchId: string, opts: WaitOptions = {}): Promise<BatchSummary> {
+  const timeoutMs = opts.timeoutMs ?? 15 * 60_000
+  const everyMs = opts.everyMs ?? 10_000
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
+  const now = opts.now ?? Date.now
+  const started = now()
+  for (;;) {
+    let reason = 'not usable yet'
+    try {
+      const summary = summarise(await bee.stamp.get(new BatchId(batchId)))
+      if (summary.usable) return summary
+    } catch (e) {
+      reason = `the node does not list it yet (${(e as Error).message})`
+    }
+    const waited = now() - started
+    if (waited >= timeoutMs) throw new BatchNotUsableYetError(batchId, waited / 1000)
+    opts.onWait?.(Math.round(waited / 1000), reason)
+    await sleep(everyMs)
+  }
 }
 
 export async function quoteExtend(bee: Bee, batchId: string, days: number): Promise<string> {

@@ -19,7 +19,8 @@ import { readFeedHead, topicFrom } from '../core/feed.js'
 import { publish } from '../core/publish.js'
 import { archiveJsonPath, readPublishedIdentifiers } from '../core/record.js'
 import { loadFeedSigner } from '../core/signer.js'
-import { buyBatch, describeBatch, extendBatch, listBatches, quoteBuy, quoteExtend } from '../core/stamps.js'
+import { saveBoughtBatch } from '../core/local-state.js'
+import { BatchNotUsableYetError, buyBatch, describeBatch, extendBatch, listBatches, quoteBuy, quoteExtend, waitUntilUsable } from '../core/stamps.js'
 
 const CLIENT_HEADER = 'x-archive-client'
 
@@ -123,8 +124,19 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
         case 'POST /api/buy': {
           const body = await readBody(req)
           if (body.confirm !== true) return json(res, 400, { error: 'Buying spends xBZZ; confirm: true is required.' })
-          const id = await buyBatch(bee, num(body.sizeMb, 'sizeMb'), num(body.days, 'days'))
-          return json(res, 200, await describeBatch(bee, id))
+          const sizeMb = num(body.sizeMb, 'sizeMb')
+          const days = num(body.days, 'days')
+          const id = await buyBatch(bee, sizeMb, days)
+          // The xBZZ is spent: save and log the id before waiting for it to become usable.
+          saveBoughtBatch(config.root, { batchId: id, sizeMb, days, boughtAt: new Date().toISOString() })
+          console.log(`  bought batch ${id} (saved to .state/last-batch.txt); waiting until usable…`)
+          try {
+            return json(res, 200, await waitUntilUsable(bee, id, { timeoutMs: 4 * 60_000 }))
+          } catch (e) {
+            if (!(e instanceof BatchNotUsableYetError)) throw e
+            // 202: bought and saved, just not usable yet. The batch list shows it as "Not usable yet".
+            return json(res, 202, { batchId: id, usable: false, message: e.message })
+          }
         }
 
         case 'POST /api/extend-quote': {

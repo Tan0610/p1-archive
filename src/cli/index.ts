@@ -7,7 +7,8 @@ import { loadConfig, trimSlash } from '../core/config.js'
 import { readFeedHead, topicFrom } from '../core/feed.js'
 import { publish, type PublishEvent } from '../core/publish.js'
 import { readPublishedIdentifiers } from '../core/record.js'
-import { buyBatch, describeBatch, extendBatch, listBatches, quoteBuy, quoteExtend } from '../core/stamps.js'
+import { readLastBatch, saveBoughtBatch } from '../core/local-state.js'
+import { buyBatch, describeBatch, extendBatch, listBatches, quoteBuy, quoteExtend, waitUntilUsable } from '../core/stamps.js'
 import { honestSentence, type StorageTerm } from '../core/ttl.js'
 import { PUBLIC_GATEWAY } from '../recover/recover.js'
 import { bar, c, fail, heading, kv, plate } from './ui.js'
@@ -88,10 +89,17 @@ async function cmdQuote(bee: Bee, sizeMb: number, days: number): Promise<void> {
 async function cmdBuy(bee: Bee, sizeMb: number, days: number, yes: boolean): Promise<void> {
   await cmdQuote(bee, sizeMb, days)
   if (!yes) fail('Buying spends xBZZ. Re-run with --yes once you are happy with the quote.')
-  console.log('\n  Buying… (the node waits until the batch is usable, usually about a minute)')
+  console.log('\n  Buying…')
   const id = await buyBatch(bee, sizeMb, days)
-  const b = await describeBatch(bee, id)
-  console.log('  ' + c.green('✓ ') + `Batch ${id}`)
+  // Print and save the id BEFORE waiting: the xBZZ is spent now, whatever happens next.
+  const saved = saveBoughtBatch(loadConfig().root, { batchId: id, sizeMb, days, boughtAt: new Date().toISOString() })
+  console.log('  ' + c.green('✓ ') + `Bought batch ${id}`)
+  console.log('  ' + c.dim(`  id saved to ${path.relative(process.cwd(), saved)}, so nothing is lost if this wait is interrupted`))
+  console.log('  Waiting until the node calls it usable (usually 1–5 minutes; giving up after 15)…')
+  const b = await waitUntilUsable(bee, id, {
+    onWait: (s, reason) => console.log(c.dim(`  … ${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s: ${reason}`)),
+  })
+  console.log('  ' + c.green('✓ ') + 'Usable. Publish with: npm run archive -- publish')
   printTerm(b.term)
 }
 
@@ -159,6 +167,15 @@ function identifiers(owner?: string, topic?: string): { owner: string; topic: st
 }
 
 async function cmdStatus(bee: Bee, owner?: string, topic?: string, batch?: string): Promise<void> {
+  const root = loadConfig().root
+  // Before the first publish there is no archive.json, but a just-bought batch can still be checked.
+  if (!(owner && topic) && !readPublishedIdentifiers(root)) {
+    const batchId = batch ?? readLastBatch(root)
+    if (!batchId) fail('Nothing published yet (no archive.json). Pass --owner and --topic, or --batch <id>, or publish first.')
+    heading('Batch status (live from the node)')
+    await printBatch(bee, batchId)
+    return
+  }
   const ids = identifiers(owner, topic)
   heading('Archive status (live from the node)')
   if (ids.manifest) kv('archive address', ids.manifest)
@@ -166,13 +183,16 @@ async function cmdStatus(bee: Bee, owner?: string, topic?: string, batch?: strin
   kv('feed topic', ids.topic)
   const head = await readFeedHead(bee, topicFrom(ids.topic), new EthAddress(ids.owner))
   kv('latest edition', head.empty ? c.saffron('none yet — the feed has no updates') : `index ${head.index} → ${head.reference}`)
-  const batchId = batch ?? ids.batchId
-  if (batchId) {
-    const b = await describeBatch(bee, batchId)
-    kv('batch', b.batchId)
-    kv('used', `${bar(b.usage)} ${(b.usage * 100).toFixed(1)}%`)
-    printTerm(b.term)
-  }
+  const batchId = batch ?? ids.batchId ?? readLastBatch(root)
+  if (batchId) await printBatch(bee, batchId)
+}
+
+async function printBatch(bee: Bee, batchId: string): Promise<void> {
+  const b = await describeBatch(bee, batchId)
+  kv('batch', b.batchId)
+  kv('usable', b.usable ? c.green('yes') : c.saffron('not yet (new batches usually take 1–5 minutes)'))
+  kv('used', `${bar(b.usage)} ${(b.usage * 100).toFixed(1)}%`)
+  printTerm(b.term)
 }
 
 async function cmdVerify(bee: Bee, gateway: boolean): Promise<void> {

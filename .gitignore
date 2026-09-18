@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 .secrets/
+.state/
 *.key
 *.pem
 
