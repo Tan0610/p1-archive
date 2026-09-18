@@ -1,4 +1,5 @@
 import { BeeResponseError, EthAddress, FeedIndex, Reference, Topic, type Bee, type PrivateKey } from '@ethersphere/bee-js'
+import { probeLatestIndex } from '../shared/feed-probe.js'
 
 /**
  * Feeds give the archive ONE address that never changes.
@@ -17,9 +18,64 @@ export function topicFrom(input: string): Topic {
   return /^[0-9a-fA-F]{64}$/.test(clean) ? new Topic(clean) : Topic.fromString(input)
 }
 
-/** Bee answers 404 "no update found" when a feed has never been written. */
+/**
+ * Bee answers 404 "no update found" when a feed has never been written, but
+ * Bee 2.8 ALSO answers 404 when the lookup itself failed (e.g. a retrieval
+ * timeout). So on its own this is only a hint; see resolveNextIndex.
+ */
 export function isEmptyFeedError(error: unknown): boolean {
   return error instanceof BeeResponseError && error.status === 404
+}
+
+export interface RetryOptions {
+  /** Total tries, including the first. Default 4. */
+  attempts?: number
+  /** First back-off delay; it doubles after each failure. Default 1 000 ms (1 s, 2 s, 4 s). */
+  baseMs?: number
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** 5xx, 429 and network-level failures (no HTTP status) are worth another try; a 404 or other 4xx is an answer. */
+function isTransient(error: unknown): boolean {
+  if (error instanceof BeeResponseError) return error.status === undefined || error.status >= 500 || error.status === 429
+  return true
+}
+
+/** Retries transient failures with exponential back-off. Never retries a 404. */
+export async function withRetry<T>(fn: () => Promise<T>, retry: RetryOptions = {}): Promise<T> {
+  const attempts = retry.attempts ?? 4
+  const baseMs = retry.baseMs ?? 1_000
+  for (let i = 1; ; i++) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (i >= attempts || !isTransient(error)) throw error
+      await sleep(baseMs * 2 ** (i - 1))
+    }
+  }
+}
+
+/**
+ * Is feed update `index` on the network? Reads that one signed chunk directly:
+ * downloadReference with an explicit index is a plain /chunks read, with no
+ * feed lookup involved. 404 → false. A 5xx is retried and then thrown, never
+ * taken to mean "absent": guessing wrong here would mean signing a slot twice.
+ */
+export async function hasFeedUpdate(bee: Bee, topic: Topic, owner: EthAddress, index: FeedIndex, retry?: RetryOptions): Promise<boolean> {
+  try {
+    await withRetry(() => bee.feed.makeReader(topic, owner).downloadReference({ index }), retry)
+    return true
+  } catch (error) {
+    if (isEmptyFeedError(error)) return false
+    throw error
+  }
+}
+
+/** Newest existing update, found by reading chunks. Only call once update #0 is known to exist. */
+async function probeLatest(bee: Bee, topic: Topic, owner: EthAddress, retry?: RetryOptions): Promise<FeedIndex> {
+  const latest = await probeLatestIndex((i) => hasFeedUpdate(bee, topic, owner, FeedIndex.fromBigInt(i), retry))
+  return FeedIndex.fromBigInt(latest)
 }
 
 export interface NextIndex {
@@ -34,23 +90,33 @@ export interface NextIndex {
  * Asks the network where the feed currently is. Never a literal, never a local
  * counter, never a value remembered from archive.json.
  *
- * First run: an empty feed makes Bee answer 404; that — and only that — is
- * treated as "start at index 0". Any other failure (timeouts, 500s while the
- * node syncs) aborts, because silently guessing 0 would overwrite nothing and
- * fork the history. (bee-js' own findNextIndex swallows every HTTP error and
- * returns 0, which is why we never let it choose.)
+ *  1. Feed lookup (`fetchLatestUpdate`) → `feedIndexNext`. A 5xx is retried
+ *     with back-off, then aborts: silently guessing would fork the history.
+ *     (bee-js' own findNextIndex swallows every HTTP error and returns 0, which
+ *     is why we never let it choose.)
+ *  2. First run: the lookup answers 404 both for an empty feed and for a lookup
+ *     that failed. So a 404 is a first run ONLY if update #0 itself is absent,
+ *     read directly as a chunk. If #0 exists the lookup was wrong, and the real
+ *     head is found by probing chunks (gallop, then binary search).
+ *  3. The slot about to be handed out is read once more. If it is already taken
+ *     (a lagging lookup), we step past it rather than sign a second version.
  */
-export async function resolveNextIndex(bee: Bee, topic: Topic, owner: EthAddress): Promise<NextIndex> {
+export async function resolveNextIndex(bee: Bee, topic: Topic, owner: EthAddress, retry?: RetryOptions): Promise<NextIndex> {
+  let next: FeedIndex
   try {
-    const latest = await bee.feed.fetchLatestUpdate(topic, owner)
-    const next = latest.feedIndexNext ?? latest.feedIndex.next()
-    return { next, latest: latest.feedIndex, firstRun: false }
+    const latest = await withRetry(() => bee.feed.fetchLatestUpdate(topic, owner), retry)
+    next = latest.feedIndexNext ?? latest.feedIndex.next()
   } catch (error) {
-    if (isEmptyFeedError(error)) {
-      return { next: FeedIndex.fromBigInt(0n), latest: null, firstRun: true }
+    if (!isEmptyFeedError(error)) throw error
+    // First-run guard: 404 → start at index 0, but only if update #0 is truly absent.
+    const first = FeedIndex.fromBigInt(0n)
+    if (!(await hasFeedUpdate(bee, topic, owner, first, retry))) {
+      return { next: first, latest: null, firstRun: true }
     }
-    throw error
+    next = (await probeLatest(bee, topic, owner, retry)).next()
   }
+  while (await hasFeedUpdate(bee, topic, owner, next, retry)) next = next.next()
+  return { next, latest: FeedIndex.fromBigInt(next.toBigInt() - 1n), firstRun: false }
 }
 
 /**
@@ -82,18 +148,26 @@ export async function publishToFeed(
   batchId: string,
   topic: Topic,
   collectionReference: Reference | string,
+  retry?: RetryOptions,
 ): Promise<FeedPublishResult> {
   const writer = bee.feed.makeWriter(topic, signer)
   // Read the feed from the network immediately before writing to it.
-  const { next, firstRun } = await resolveNextIndex(bee, topic, writer.owner)
+  const { next, firstRun } = await resolveNextIndex(bee, topic, writer.owner, retry)
   const result = await writer.uploadReference(batchId, collectionReference, { index: next })
   return { index: next.toBigInt(), firstRun, updateChunk: result.reference.toHex() }
 }
 
 /** Reads back the exact slot we wrote (not "latest", which can lag on a light node). */
-export async function verifyUpdate(bee: Bee, topic: Topic, owner: EthAddress, index: bigint, expected: Reference | string): Promise<boolean> {
+export async function verifyUpdate(
+  bee: Bee,
+  topic: Topic,
+  owner: EthAddress,
+  index: bigint,
+  expected: Reference | string,
+  retry?: RetryOptions,
+): Promise<boolean> {
   const reader = bee.feed.makeReader(topic, owner)
-  const update = await reader.downloadReference({ index: FeedIndex.fromBigInt(index) })
+  const update = await withRetry(() => reader.downloadReference({ index: FeedIndex.fromBigInt(index) }), retry)
   return update.reference.equals(new Reference(expected))
 }
 
@@ -103,13 +177,17 @@ export interface FeedHead {
   reference: string | null
 }
 
-/** Latest edition of a feed, with the empty-feed case handled. */
-export async function readFeedHead(bee: Bee, topic: Topic, owner: EthAddress): Promise<FeedHead> {
+/** Latest edition of a feed. A 404 from the lookup is only "empty" if update #0 is absent too. */
+export async function readFeedHead(bee: Bee, topic: Topic, owner: EthAddress, retry?: RetryOptions): Promise<FeedHead> {
+  const reader = bee.feed.makeReader(topic, owner)
   try {
-    const head = await bee.feed.makeReader(topic, owner).downloadReference()
+    const head = await withRetry(() => reader.downloadReference(), retry)
     return { empty: false, index: head.feedIndex.toBigInt(), reference: head.reference.toHex() }
   } catch (error) {
-    if (isEmptyFeedError(error)) return { empty: true, index: null, reference: null }
-    throw error
+    if (!isEmptyFeedError(error)) throw error
+    if (!(await hasFeedUpdate(bee, topic, owner, FeedIndex.fromBigInt(0n), retry))) return { empty: true, index: null, reference: null }
+    const index = await probeLatest(bee, topic, owner, retry)
+    const head = await withRetry(() => reader.downloadReference({ index }), retry)
+    return { empty: false, index: index.toBigInt(), reference: head.reference.toHex() }
   }
 }
