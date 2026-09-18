@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Bee, Bytes, FeedIndex, Identifier, PrivateKey, Reference, Topic } from '@ethersphere/bee-js'
 import {
@@ -19,12 +20,14 @@ import {
 } from '../reader/swarm-lite.js'
 
 const bee = new Bee('http://127.0.0.1:1633') // pure helpers only, never makes a request
-const KEY = new PrivateKey(Bytes.keccak256(utf8('swarm-lite test key')).toUint8Array())
+// A fresh throwaway key every run: no key material is ever written into this repository.
+const KEY = new PrivateKey(randomBytes(32))
 const OWNER = KEY.publicKey().address()
 const TOPIC_TEXT = 'tsering/himalayan-manuscripts/v1'
 
 describe('keccak256 (zero-dependency implementation)', () => {
   it('matches the published test vectors', () => {
+    // Public keccak256 digests of "" and "abc" (standard known-answer tests), not keys.
     expect(bytesToHex(keccak256(new Uint8Array()))).toBe('c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
     expect(bytesToHex(keccak256(utf8('abc')))).toBe('4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45')
   })

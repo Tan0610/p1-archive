@@ -1,8 +1,10 @@
+import { randomBytes } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { BeeResponseError, Bytes, FeedIndex, PrivateKey, Reference, Topic, type Bee } from '@ethersphere/bee-js'
 import { publishToFeed, readFeedHead, resolveNextIndex, topicFrom } from '../src/core/feed.js'
 
-const KEY = new PrivateKey(Bytes.keccak256(new TextEncoder().encode('feed index test')).toUint8Array())
+// A fresh throwaway key every run: no key material is ever written into this repository.
+const KEY = new PrivateKey(randomBytes(32))
 const OWNER = KEY.publicKey().address()
 const TOPIC = Topic.fromString('tsering/himalayan-manuscripts/v1')
 const COLLECTION = new Reference('c0'.repeat(32))
