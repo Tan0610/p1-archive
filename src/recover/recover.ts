@@ -7,7 +7,8 @@
  *
  * This module deliberately imports nothing from the publisher: no config, no
  * archive.json, no key, no local index or database. (ESLint enforces that.)
- * The only local import is the published catalogue format (src/shared).
+ * The only local imports come from src/shared: the published catalogue format
+ * and the chunk-probing helper that finds a feed's newest update.
  * The list of folios comes from the network: the catalogue.json inside the
  * edition, cross-checked against the edition's own manifest.
  */
@@ -16,6 +17,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Bee, BeeResponseError, EthAddress, FeedIndex, MantarayNode, Reference, Topic } from '@ethersphere/bee-js'
 import { isSafeRelativePath, validateCatalogue, type Catalogue } from '../shared/catalogue-schema.js'
+import { probeLatestIndex } from '../shared/feed-probe.js'
 
 export const PUBLIC_GATEWAY = 'https://api.gateway.ethswarm.org'
 
@@ -63,8 +65,18 @@ function topicFrom(input: string): Topic {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-/** Gateways sometimes answer 500 for a chunk that is merely slow to arrive; retry transient failures. */
-async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+interface RetryOptions {
+  tries?: number
+  /** First back-off delay (600 ms by default), doubled after each failure. */
+  baseMs?: number
+  /** Retry a 404 too (a chunk that is merely slow to arrive). Default true. */
+  retryNotFound?: boolean
+}
+
+/** Gateways sometimes answer 404 or 500 for a chunk that is merely slow to arrive; retry transient failures with back-off. */
+async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
+  const tries = opts.tries ?? 3
+  const baseMs = opts.baseMs ?? 600
   let last: unknown
   for (let i = 0; i < tries; i++) {
     try {
@@ -72,8 +84,9 @@ async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
     } catch (e) {
       last = e
       const status = e instanceof BeeResponseError ? e.status : undefined
+      if (status === 404 && opts.retryNotFound === false) break
       if (status !== undefined && status >= 400 && status < 500 && status !== 404 && status !== 429) break
-      await sleep(600 * 2 ** i)
+      if (i < tries - 1) await sleep(baseMs * 2 ** i)
     }
   }
   throw last
@@ -81,6 +94,52 @@ async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
 
 function isNotFound(e: unknown): boolean {
   return e instanceof BeeResponseError && e.status === 404
+}
+
+/** The part of a bee-js FeedReader that recovery uses. */
+export interface FeedHeadReader {
+  downloadReference(options?: { index?: FeedIndex }): Promise<{ reference: Reference; feedIndex: FeedIndex }>
+}
+
+/**
+ * Latest update of a feed, or null when the feed truly has no updates.
+ *
+ * Bee 2.8 answers the feed lookup with 404 both for an empty feed and for a
+ * lookup that failed (e.g. a retrieval timeout). So a 404 is only "no updates"
+ * if update #0 itself is absent, read directly as a chunk (with retries: this
+ * is the answer that would send a reader away empty-handed). If #0 exists, the
+ * newest update is found by reading chunks: gallop, then binary search.
+ */
+export async function findFeedHead(
+  reader: FeedHeadReader,
+  opts: { baseMs?: number; log?: (message: string) => void } = {},
+): Promise<{ index: bigint; reference: Reference } | null> {
+  try {
+    const head = await withRetry(() => reader.downloadReference(), { baseMs: opts.baseMs })
+    return { index: head.feedIndex.toBigInt(), reference: head.reference }
+  } catch (e) {
+    if (!isNotFound(e)) throw e
+  }
+  opts.log?.('The feed lookup answered 404, which can also mean it timed out. Reading update #0 directly…')
+  const read = (i: bigint, retryNotFound: boolean) =>
+    withRetry(() => reader.downloadReference({ index: FeedIndex.fromBigInt(i) }), { baseMs: opts.baseMs, retryNotFound })
+  /** `decisive`: the answer for #0 decides "no updates", so a 404 is retried and a 500 is an error, not "absent". */
+  const exists = async (i: bigint, decisive = false) => {
+    try {
+      await read(i, decisive)
+      return true
+    } catch (e) {
+      if (isNotFound(e)) return false
+      // Past #0, a gateway 500 after retries only means that chunk could not be found.
+      if (!decisive && e instanceof BeeResponseError && e.status === 500) return false
+      throw e
+    }
+  }
+  if (!(await exists(0n, true))) return null
+  const index = await probeLatestIndex((i) => exists(i))
+  const head = await read(index, true)
+  opts.log?.(`Update #0 exists, so the feed is not empty; probing chunks found the newest update at index ${index}.`)
+  return { index, reference: head.reference }
 }
 
 export async function recover(input: RecoverInput, opts: RecoverOptions): Promise<RecoveryReport> {
@@ -135,31 +194,28 @@ export async function recover(input: RecoverInput, opts: RecoverOptions): Promis
   // --- 2. Resolve the feed to the latest edition
   if (owner && topic) {
     const reader = bee.feed.makeReader(topic, owner)
-    try {
-      const head = await withRetry(() => reader.downloadReference())
-      collectionRef = head.reference
-      report.feed = { owner: owner.toChecksum(), topic: topic.toHex(), index: head.feedIndex.toBigInt().toString() }
-      log(`Feed is at index ${report.feed.index} → edition ${collectionRef.toHex().slice(0, 12)}…`)
+    const head = await findFeedHead(reader, { log })
+    if (!head) {
+      // First-run case seen from the outside: the feed exists as an idea but nobody has written to it yet
+      // (the lookup said 404 AND update #0 is not on the network).
+      report.status = 'empty-feed'
+      report.problems.push('This feed has no updates yet — nothing has been published under this owner and topic.')
+      log(report.problems[0]!)
+      return finish()
+    }
+    collectionRef = head.reference
+    report.feed = { owner: owner.toChecksum(), topic: topic.toHex(), index: head.index.toString() }
+    log(`Feed is at index ${report.feed.index} → edition ${collectionRef.toHex().slice(0, 12)}…`)
 
-      if (opts.allEditions) {
-        for (let i = 0n; i <= head.feedIndex.toBigInt(); i++) {
-          try {
-            const ed = await reader.downloadReference({ index: FeedIndex.fromBigInt(i) })
-            report.editions.push({ index: i.toString(), reference: ed.reference.toHex(), retrievable: true })
-          } catch {
-            report.editions.push({ index: i.toString(), reference: null, retrievable: false })
-          }
+    if (opts.allEditions) {
+      for (let i = 0n; i <= head.index; i++) {
+        try {
+          const ed = await reader.downloadReference({ index: FeedIndex.fromBigInt(i) })
+          report.editions.push({ index: i.toString(), reference: ed.reference.toHex(), retrievable: true })
+        } catch {
+          report.editions.push({ index: i.toString(), reference: null, retrievable: false })
         }
       }
-    } catch (e) {
-      if (isNotFound(e)) {
-        // First-run case seen from the outside: the feed exists as an idea but nobody has written to it yet.
-        report.status = 'empty-feed'
-        report.problems.push('This feed has no updates yet — nothing has been published under this owner and topic.')
-        log(report.problems[0]!)
-        return finish()
-      }
-      throw e
     }
   }
 

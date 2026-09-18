@@ -23,7 +23,7 @@ describe('recovery depends only on published identifiers', () => {
     for (const file of sources(path.join(ROOT, 'src', 'recover'))) {
       const imports = [...readFileSync(file, 'utf8').matchAll(/from '([^']+)'/g)].map((m) => m[1]!)
       for (const spec of imports) {
-        const allowed = spec.startsWith('node:') || spec === '@ethersphere/bee-js' || spec === './recover.js' || spec === '../shared/catalogue-schema.js'
+        const allowed = spec.startsWith('node:') || spec === '@ethersphere/bee-js' || spec === './recover.js' || spec.startsWith('../shared/')
         expect(allowed, `${path.relative(ROOT, file)} imports ${spec}`).toBe(true)
       }
     }
