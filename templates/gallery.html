@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folios on Swarm</title>
+<meta name="description" content="A manuscript archive published on Swarm. Every folio, with a checksum you can verify in your browser.">
+<script>
+  // /bzz/<ref> without a trailing slash breaks relative links; add it.
+  if (/\/bzz\/[0-9a-f]{64,128}$/i.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash)
+</script>
+<style>
+  :root {
+    --bark: #f3dccb;
+    --bark-deep: #e6bea3;
+    --soot: #2b1d17;
+    --soot-soft: #5a4238;
+    --lapis: #2b4c9b;
+    --malachite: #3f7f5e;
+    --orpiment: #e2a93b;
+    --cinnabar: #b8322a;
+    --display: "Rozha One", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --body: "Alegreya", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --hand: "Caveat", "Segoe Print", "Bradley Hand", "Comic Neue", cursive;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  }
+  * { box-sizing: border-box }
+  html { background: var(--bark) }
+  body {
+    margin: 0;
+    color: var(--soot);
+    font: 1.125rem/1.6 var(--body);
+    /* birch-bark lenticels: short dark dashes scattered across the page */
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='360'%3E%3Cg stroke='%238a5a45' stroke-linecap='round' opacity='.22'%3E%3Cpath d='M30 40h34' stroke-width='2.4'/%3E%3Cpath d='M250 22h18' stroke-width='1.6'/%3E%3Cpath d='M160 120h42' stroke-width='2'/%3E%3Cpath d='M360 150h22' stroke-width='2.6'/%3E%3Cpath d='M60 230h16' stroke-width='1.4'/%3E%3Cpath d='M280 270h38' stroke-width='2.2'/%3E%3Cpath d='M120 320h24' stroke-width='1.8'/%3E%3C/g%3E%3C/svg%3E") var(--bark);
+  }
+  a { color: var(--lapis); text-decoration-thickness: 1px; text-underline-offset: 3px }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--lapis); outline-offset: 3px; border-radius: 2px }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 20px 96px 20px; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 32px }
+  header { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 32px; align-items: end }
+  h1 { font: 400 clamp(2.4rem, 6vw, 4.2rem)/1.02 var(--display); margin: 0; letter-spacing: -.01em; max-width: 18ch }
+  h1 .mark { display: block; font-size: .6em; line-height: 1; color: var(--cinnabar); margin-bottom: .3em; font-family: "Noto Serif Tibetan", "Microsoft Himalaya", serif }
+  .lede { max-width: 58ch; margin: 18px 0 0; color: var(--soot-soft) }
+  .hand { font-family: var(--hand); font-size: 1.35rem; line-height: 1.25 }
+  .margin-note { transform: rotate(-2.5deg); color: var(--lapis) }
+  .margin-note.red { color: var(--cinnabar); transform: rotate(1.8deg) }
+  .margin-note.black { color: var(--soot); transform: rotate(-1deg) }
+  .rent {
+    position: relative; margin-top: 28px; padding: 16px 20px 16px 56px; max-width: 62ch;
+    background: rgba(255, 250, 244, .55); border: 1.5px solid var(--soot); border-radius: 3px 14px 4px 18px / 14px 3px 18px 4px;
+  }
+  .rent::before { content: ""; position: absolute; left: 18px; top: 18px; width: 22px; height: 22px; border-radius: 50%; background: var(--orpiment); box-shadow: 0 0 0 4px rgba(226, 169, 59, .25) }
+  .rent.late::before { background: var(--cinnabar); box-shadow: 0 0 0 4px rgba(184, 50, 42, .2) }
+  .rent strong { font-weight: 700 }
+  main { min-width: 0 }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin: 8px 0 26px }
+  button {
+    font: 600 1rem/1 var(--body); color: var(--bark); background: var(--soot); border: 0; padding: 12px 18px 13px;
+    border-radius: 24px 18px 26px 16px / 20px 24px 18px 22px; cursor: pointer; transition: transform .15s ease;
+  }
+  button:hover { transform: rotate(-1.5deg) scale(1.03) }
+  button.quiet { background: transparent; color: var(--soot); box-shadow: inset 0 0 0 1.5px var(--soot) }
+  .tally { font-family: var(--hand); font-size: 1.4rem; color: var(--malachite) }
+  ol.leaves { list-style: none; margin: 0; padding: 0 }
+  .leaf { position: relative; margin: 0 0 34px; transform: rotate(var(--tilt, 0deg)); transition: transform .25s ease }
+  .leaf:hover { transform: rotate(0deg) translateY(-2px) }
+  .leaf img { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(80, 40, 20, .18)) }
+  .leaf .cap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 8px 6px 0 }
+  .leaf h2 { font: 400 1.35rem/1.2 var(--display); margin: 0 }
+  .leaf p { margin: 2px 0 0; color: var(--soot-soft); font-size: 1rem }
+  .leaf .meta { font-size: .95rem; color: var(--soot-soft); text-align: right }
+  .hash { font: .78rem/1.3 var(--mono); word-break: break-all; color: var(--soot-soft) }
+  .slip {
+    margin: 0 0 30px auto; width: min(560px, 92%); padding: 16px 20px; background: #fbf3ea; border-left: 3px solid var(--malachite);
+    transform: rotate(var(--tilt, .6deg)); box-shadow: 0 3px 0 rgba(43, 29, 23, .08);
+  }
+  .slip pre { white-space: pre-wrap; font: 1rem/1.5 var(--body); margin: 8px 0 0 }
+  .check { background: none; color: var(--lapis); padding: 0; font: 1rem var(--hand); font-size: 1.2rem; border-radius: 0; text-decoration: underline wavy; text-underline-offset: 4px }
+  .check:hover { transform: none; color: var(--cinnabar) }
+  .seal {
+    position: absolute; right: 7%; top: 18%; width: 74px; height: 74px; border-radius: 46% 54% 50% 50%; display: grid; place-items: center;
+    background: var(--cinnabar); color: #fbe9dc; font: 700 .8rem/1.05 var(--body); text-align: center; padding: 8px;
+    box-shadow: inset 0 0 0 3px rgba(251, 233, 220, .55), 0 2px 6px rgba(80, 20, 10, .35); transform: rotate(-14deg) scale(1); pointer-events: none;
+    animation: stamp .45s cubic-bezier(.2, 1.6, .4, 1) both;
+  }
+  .seal.bad { background: var(--soot) }
+  @keyframes stamp { from { transform: rotate(-30deg) scale(2.2); opacity: 0 } to { transform: rotate(-14deg) scale(1); opacity: .93 } }
+  aside { font-size: 1rem }
+  aside .sticky { position: sticky; top: 24px; display: grid; gap: 22px }
+  aside h3 { font: 400 1.2rem/1.2 var(--display); margin: 0 0 4px }
+  aside dl { margin: 0 }
+  aside dt { color: var(--soot-soft); font-size: .92rem; margin-top: 8px }
+  aside dd { margin: 0 }
+  .empty, .error { padding: 24px; border: 1.5px dashed var(--soot); max-width: 60ch }
+  .error { border-color: var(--cinnabar) }
+  @media (max-width: 860px) {
+    .wrap, header { grid-template-columns: minmax(0, 1fr) }
+    aside .sticky { position: static }
+    .seal { width: 60px; height: 60px; font-size: .7rem }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important }
+    .leaf, .leaf:hover, .slip { transform: none }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 id="title"><span class="mark" aria-hidden="true">༄༅།</span><span id="title-text">Folios on Swarm</span></h1>
+      <p class="lede" id="lede">Loading the catalogue that travels with these folios…</p>
+      <div class="rent" id="rent" hidden></div>
+    </div>
+    <p class="hand margin-note" aria-hidden="true">every leaf carries its own checksum — press “check” and your browser does the maths</p>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <button type="button" id="check-all" disabled>Check every folio</button>
+      <a href="catalogue.json">catalogue.json</a>
+      <a href="recover.html">Recover with only an address</a>
+      <span class="tally" id="tally" aria-live="polite"></span>
+    </div>
+    <ol class="leaves" id="leaves"></ol>
+  </main>
+
+  <aside>
+    <div class="sticky">
+      <section>
+        <h3>Newest edition</h3>
+        <p>This page is one edition. The archive lives behind a feed, so the address below always opens the newest one.</p>
+        <dl id="feed"></dl>
+      </section>
+      <p class="hand margin-note red" aria-hidden="true">a hash is not an address — the feed is</p>
+      <p class="hand margin-note black" aria-hidden="true">stamps are rent, not ownership</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  var TILTS = ['-0.7deg', '0.45deg', '-0.25deg', '0.8deg', '-0.5deg', '0.3deg']
+  var $ = function (id) { return document.getElementById(id) }
+  var results = new Map()
+
+  function el(tag, attrs, children) {
+    var n = document.createElement(tag)
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') n.textContent = attrs[k]
+      else if (k === 'style') n.setAttribute('style', attrs[k])
+      else n.setAttribute(k, attrs[k])
+    })
+    ;(children || []).forEach(function (c) { if (c) n.appendChild(c) })
+    return n
+  }
+  function kb(n) { return n < 1024 ? n + ' B' : (n / 1024).toFixed(1) + ' KB' }
+  function date(iso) { return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) }
+  function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, '0') }).join('') }
+
+  function check(folio, node) {
+    return fetch(folio.path).then(function (r) {
+      if (!r.ok) throw new Error(r.status)
+      return r.arrayBuffer()
+    }).then(function (buf) {
+      if (!crypto.subtle) throw new Error('no WebCrypto')
+      return crypto.subtle.digest('SHA-256', buf)
+    }).then(function (d) {
+      var ok = hex(d) === folio.sha256
+      results.set(folio.path, ok)
+      var old = node.querySelector('.seal')
+      if (old) old.remove()
+      node.appendChild(el('div', { class: ok ? 'seal' : 'seal bad', text: ok ? 'matches the catalogue' : 'does not match', role: 'status' }))
+      tally()
+    }).catch(function (e) {
+      results.set(folio.path, false)
+      node.appendChild(el('div', { class: 'seal bad', text: 'could not fetch', role: 'status', title: String(e.message || e) }))
+      tally()
+    })
+  }
+
+  function tally() {
+    var ok = 0
+    results.forEach(function (v) { if (v) ok++ })
+    $('tally').textContent = results.size ? ok + ' of ' + results.size + ' checked leaves match' : ''
+  }
+
+  fetch('catalogue.json').then(function (r) {
+    if (!r.ok) throw new Error('catalogue.json answered ' + r.status)
+    return r.json()
+  }).then(function (cat) {
+    document.title = cat.title
+    $('title-text').textContent = cat.title
+    $('lede').textContent = cat.description + ' ' + cat.folios.length + ' files, published ' + date(cat.publishedAt) + '.'
+
+    var s = cat.storage || {}
+    var rent = $('rent')
+    rent.hidden = false
+    if (s.paidUntil) {
+      var late = new Date(s.paidUntil) < new Date()
+      if (late) rent.classList.add('late')
+      rent.innerHTML = ''
+      rent.appendChild(el('p', { style: 'margin:0' }, [
+        document.createTextNode(late ? 'The storage for this edition was paid until about ' : 'Storage for this edition is paid until about '),
+        el('strong', { text: date(s.paidUntil) }),
+        document.createTextNode(' — that was the node’s estimate on ' + date(s.asOf) + '. After that, nodes may drop these files unless someone tops up the postage batch. Ask any Bee node for the live figure: '),
+        el('code', { class: 'hash', text: 'GET /stamps/' + s.batchId }),
+      ]))
+    } else {
+      rent.textContent = 'How long this edition is paid for was unknown when it was published. Ask any Bee node: GET /stamps/<batch id>.'
+    }
+
+    var f = cat.feed || {}
+    var dl = $('feed')
+    ;[['Archive address', f.feedManifest], ['Feed owner', f.owner], ['Feed topic', f.topic], ['Topic text', f.topicString]].forEach(function (p) {
+      dl.appendChild(el('dt', { text: p[0] }))
+      dl.appendChild(el('dd', { class: 'hash', text: p[1] || '—' }))
+    })
+
+    var list = $('leaves')
+    cat.folios.forEach(function (folio, i) {
+      var tilt = TILTS[i % TILTS.length]
+      var item
+      if (folio.kind === 'text') {
+        var pre = el('pre', { text: 'Loading…' })
+        item = el('li', { class: 'slip', style: '--tilt:' + tilt }, [
+          el('strong', { text: folio.title }),
+          pre,
+          el('p', { class: 'hash', text: 'sha256 ' + folio.sha256 }),
+          el('button', { type: 'button', class: 'check', text: 'check this note' }),
+        ])
+        fetch(folio.path).then(function (r) { return r.text() }).then(function (t) { pre.textContent = t }).catch(function () { pre.textContent = '(could not load)' })
+      } else {
+        var media = folio.kind === 'image'
+          ? el('img', { src: folio.path, alt: folio.title + (folio.note ? '. ' + folio.note : ''), loading: 'lazy', width: '1200', height: '300' })
+          : el('a', { href: folio.path, text: 'Download ' + folio.title })
+        item = el('li', { class: 'leaf', style: '--tilt:' + tilt }, [
+          media,
+          el('div', { class: 'cap' }, [
+            el('div', {}, [el('h2', { text: folio.title }), folio.note ? el('p', { text: folio.note }) : null]),
+            el('div', { class: 'meta' }, [
+              el('div', { text: kb(folio.size) + ', ' + folio.mime.split(';')[0] }),
+              el('button', { type: 'button', class: 'check', text: 'check this leaf' }),
+            ]),
+          ]),
+          el('p', { class: 'hash', text: 'sha256 ' + folio.sha256 }),
+        ])
+      }
+      item.querySelector('.check').addEventListener('click', function () { check(folio, item) })
+      list.appendChild(item)
+    })
+
+    var all = $('check-all')
+    all.disabled = false
+    all.addEventListener('click', function () {
+      all.disabled = true
+      var items = list.children
+      cat.folios.reduce(function (p, folio, i) { return p.then(function () { return check(folio, items[i]) }) }, Promise.resolve())
+        .then(function () { all.disabled = false })
+    })
+  }).catch(function (e) {
+    $('lede').textContent = ''
+    $('leaves').appendChild(el('li', { class: 'error', text: 'The catalogue for this edition could not be loaded (' + e.message + '). If the address was just published, the network may still be spreading it — reload in a minute. If it has been a while, the postage for this edition may have run out.' }))
+  })
+})()
+</script>
+</body>
+</html>
