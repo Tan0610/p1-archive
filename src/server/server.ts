@@ -111,7 +111,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
             return json(res, 404, { error: 'No such folio' })
           }
           res.writeHead(200, { 'content-type': mimeFor(inside), 'cache-control': 'no-store' })
-          createReadStream(inside).pipe(res)
+          sendFile(res, inside)
           return
         }
 
@@ -185,7 +185,14 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
     return
   }
   res.writeHead(200, { 'content-type': mimeFor(target) === 'application/octet-stream' ? guessWebMime(target) : mimeFor(target) })
-  createReadStream(target).pipe(res)
+  sendFile(res, target)
+}
+
+/** Streams a file; a read error ends the response instead of crashing the server. */
+function sendFile(res: ServerResponse, file: string): void {
+  createReadStream(file)
+    .on('error', () => res.destroy())
+    .pipe(res)
 }
 
 function guessWebMime(file: string): string {
@@ -201,7 +208,11 @@ export async function startServer(port = 4173): Promise<void> {
   const config = loadConfig()
   const webDist = path.join(config.root, 'web', 'dist')
   const server = createServer((req, res) => {
-    handle(req, res, config, webDist).catch((e: unknown) => json(res, 500, { error: (e as Error).message }))
+    handle(req, res, config, webDist).catch((e: unknown) => {
+      // Once a stream (SSE or a file) has started, a JSON error can no longer be sent.
+      if (res.headersSent) res.end()
+      else json(res, 500, { error: (e as Error).message })
+    })
   })
   await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve))
   console.log(`\n  ༄༅།  archive UI/API on http://127.0.0.1:${port}  (Bee: ${config.beeUrl})`)
