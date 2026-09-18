@@ -37,7 +37,7 @@ export function StampsPage({ status, onChanged }: { status: Status | null; onCha
 
       <aside className="margin" aria-label="Notes">
         <Note ink="cinnabar">“permanent” here means paid until a date. Top up before it comes.</Note>
-        <Note ink="lapis">1 GB for a week is plenty for a handful of folios. New batches take about a minute to become usable.</Note>
+        <Note ink="lapis">100 MB is the smallest batch and plenty for a handful of folios. Always ask the price first; it moves with the network.</Note>
         <Note ink="soot">the feed updates are stamped too; if the batch lapses, the address goes quiet along with the folios.</Note>
       </aside>
     </div>
@@ -143,7 +143,7 @@ function BatchRow({ batch, index, onChanged }: { batch: BatchSummary; index: num
 }
 
 function BuyForm({ disabled, onBought }: { disabled: boolean; onBought: () => Promise<void> }) {
-  const [sizeMb, setSizeMb] = useState(1000)
+  const [sizeMb, setSizeMb] = useState(100)
   const [days, setDays] = useState(7)
   const [quote, setQuote] = useState<{ size: string; duration: string; costXbzz: string } | null>(null)
   const [agree, setAgree] = useState(false)
