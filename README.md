@@ -105,6 +105,16 @@ npm run ui           # dev UI with hot reload on http://localhost:5173
 Buying, topping up and publishing each need an explicit confirmation, and the server refuses
 writes that don't come from its own page.
 
+| Publish: the folios on the desk, then a rehearsal before anything is paid for | Recover as a stranger: owner, topic, gateway, nothing else |
+|---|---|
+| ![Publish screen](docs/screenshots/publish.png) | ![Recover screen](docs/screenshots/recover.png) |
+
+<img src="docs/screenshots/stamps-phone.png" alt="Stamps screen at phone width, with the paid-until lamp unlit" width="260" align="right">
+
+The butter lamp at the top is the paid-until estimate. It is only lit by a batch TTL the node
+reported; with no batch, or no node, it stays dark and says why.
+<br clear="right">
+
 ## Recover — as a stranger
 
 ```bash
