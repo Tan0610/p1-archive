@@ -64,11 +64,14 @@ then treat it as absent).
 
 ### 3. Find the newest update
 
-Probe `i = 0`. If it's absent, **nothing has been published yet**. Otherwise probe 1, 2, 4, 8, …
+Probe `i = 0`. If it's absent (retry a miss a few times first: this is the one answer that
+decides it), **nothing has been published yet**. Otherwise probe 1, 2, 4, 8, …
 until one is missing, then binary-search between the last present and first missing index.
 (A Bee node can also tell you directly: `GET /feeds/<owner>/<topic>` answers with the headers
 `swarm-feed-index` and `swarm-feed-index-next`; browsers can't read those headers from the
-public gateway, which is why the reader probes chunks instead.)
+public gateway, which is why the reader probes chunks instead. Bee 2.8 also answers that lookup
+with `404` when the lookup itself fails, e.g. on a timeout, so a `404` there is not proof of an
+empty feed: check chunk `0`.)
 
 ### 4. Read the update
 
