@@ -1,0 +1,17 @@
+# secrets — NEVER commit
+.env
+.env.*
+!.env.example
+.secrets/
+*.key
+*.pem
+
+# generated / local state
+.staging/
+recovered/
+node_modules/
+dist/
+web/dist/
+coverage/
+*.log
+.DS_Store
