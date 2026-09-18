@@ -1,0 +1,11 @@
+node_modules
+dist
+web/dist
+.staging
+recovered
+samples
+templates
+reader/*.html
+*.md
+package-lock.json
+archive.json
