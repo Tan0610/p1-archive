@@ -178,7 +178,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
   // Static UI (after `npm run build:web`)
   const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1))
   const file = path.resolve(webDist, rel)
-  const target = file.startsWith(webDist) && existsSync(file) && statSync(file).isFile() ? file : path.join(webDist, 'index.html')
+  const target = file.startsWith(webDist + path.sep) && existsSync(file) && statSync(file).isFile() ? file : path.join(webDist, 'index.html')
   if (!existsSync(target)) {
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' })
     res.end('API is running. For the UI, run `npm run ui` (dev) or `npm run build:web` first.')
