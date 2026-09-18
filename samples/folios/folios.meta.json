@@ -1,0 +1,66 @@
+{
+  "f001-medical-compendium-12r.svg": {
+    "title": "Medical compendium, folio 12 recto",
+    "note": "Birch bark. Opening of the chapter on cold disorders; margin notes in three hands."
+  },
+  "notes/f001-medical-compendium-12r.txt": {
+    "title": "Note — Medical compendium, folio 12 recto",
+    "note": "Catalogue note"
+  },
+  "f002-medical-compendium-12v.svg": {
+    "title": "Medical compendium, folio 12 verso",
+    "note": "Birch bark. Continuation, with a herb drawn in green between the binding holes."
+  },
+  "notes/f002-medical-compendium-12v.txt": {
+    "title": "Note — Medical compendium, folio 12 verso",
+    "note": "Catalogue note"
+  },
+  "f003-astrological-table.svg": {
+    "title": "Palm-leaf astrological table",
+    "note": "Palm leaf. A grid of coloured dots, probably a calendar of auspicious days."
+  },
+  "notes/f003-astrological-table.txt": {
+    "title": "Note — Palm-leaf astrological table",
+    "note": "Catalogue note"
+  },
+  "f004-birch-scroll-fragment.svg": {
+    "title": "Birch-bark scroll fragment",
+    "note": "Birch bark. Water damage at the right; the text is still legible."
+  },
+  "notes/f004-birch-scroll-fragment.txt": {
+    "title": "Note — Birch-bark scroll fragment",
+    "note": "Catalogue note"
+  },
+  "f005-treatise-opening-leaf.svg": {
+    "title": "Philosophical treatise, opening leaf",
+    "note": "Birch bark. Wheel diagram at the centre of the opening leaf."
+  },
+  "notes/f005-treatise-opening-leaf.txt": {
+    "title": "Note — Philosophical treatise, opening leaf",
+    "note": "Catalogue note"
+  },
+  "f006-palm-leaf-hymn.svg": {
+    "title": "Palm-leaf hymn, leaf 3",
+    "note": "Palm leaf. Dense script, both binding holes intact."
+  },
+  "notes/f006-palm-leaf-hymn.txt": {
+    "title": "Note — Palm-leaf hymn, leaf 3",
+    "note": "Catalogue note"
+  },
+  "f007-colophon.svg": {
+    "title": "Colophon leaf",
+    "note": "Birch bark. The scribe’s closing note; second hand adds a later date."
+  },
+  "notes/f007-colophon.txt": {
+    "title": "Note — Colophon leaf",
+    "note": "Catalogue note"
+  },
+  "f008-damaged-leaf.svg": {
+    "title": "Damaged leaf, bundle 7",
+    "note": "Birch bark. Heavy staining; photographed for the record before any conservation."
+  },
+  "notes/f008-damaged-leaf.txt": {
+    "title": "Note — Damaged leaf, bundle 7",
+    "note": "Catalogue note"
+  }
+}
