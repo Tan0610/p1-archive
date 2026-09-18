@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Catalogue } from './catalogue-schema.js'
+import type { Catalogue } from '../shared/catalogue-schema.js'
 import { META_FILE } from './catalogue.js'
 import { honestSentence, type StorageTerm } from './ttl.js'
 

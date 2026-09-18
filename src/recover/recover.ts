@@ -7,6 +7,7 @@
  *
  * This module deliberately imports nothing from the publisher: no config, no
  * archive.json, no key, no local index or database. (ESLint enforces that.)
+ * The only local import is the published catalogue format (src/shared).
  * The list of folios comes from the network: the catalogue.json inside the
  * edition, cross-checked against the edition's own manifest.
  */
@@ -14,7 +15,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Bee, BeeResponseError, EthAddress, FeedIndex, MantarayNode, Reference, Topic } from '@ethersphere/bee-js'
-import { isSafeRelativePath, validateCatalogue, type Catalogue } from '../core/catalogue-schema.js'
+import { isSafeRelativePath, validateCatalogue, type Catalogue } from '../shared/catalogue-schema.js'
 
 export const PUBLIC_GATEWAY = 'https://api.gateway.ethswarm.org'
 

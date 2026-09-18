@@ -42,7 +42,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['../core/*', '!../core/catalogue-schema.js'],
+              group: ['../core/*', '../cli/*', '../server/*'],
               message: 'Recovery may not depend on publisher code, config, archive.json or keys.',
             },
           ],

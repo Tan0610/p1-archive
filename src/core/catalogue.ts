@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
-import type { FolioEntry } from './catalogue-schema.js'
+import type { FolioEntry } from '../shared/catalogue-schema.js'
 
 const MIME: Record<string, string> = {
   '.svg': 'image/svg+xml',

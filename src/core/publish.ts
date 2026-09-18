@@ -1,6 +1,6 @@
 import { Reference, type Bee } from '@ethersphere/bee-js'
 import { assertCanPublish, doctor } from './bee.js'
-import { CATALOGUE_SCHEMA, type Catalogue } from './catalogue-schema.js'
+import { CATALOGUE_SCHEMA, type Catalogue } from '../shared/catalogue-schema.js'
 import { scanFolios, totalBytes } from './catalogue.js'
 import { toCollectionEntries, uploadCollection } from './collection.js'
 import type { AppConfig } from './config.js'

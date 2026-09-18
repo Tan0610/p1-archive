@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { isSafeRelativePath, validateCatalogue } from '../src/core/catalogue-schema.js'
+import { isSafeRelativePath, validateCatalogue } from '../src/shared/catalogue-schema.js'
 import { scanFolios } from '../src/core/catalogue.js'
 import { toCollectionEntries } from '../src/core/collection.js'
 
