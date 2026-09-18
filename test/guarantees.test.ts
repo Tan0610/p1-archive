@@ -67,8 +67,11 @@ describe('secret scanner', () => {
   })
 
   it('catches credentials in URLs', () => {
-    expect(scanText('BEE=https://user:hunter22@bee.example.com', 'README.md')).not.toHaveLength(0)
-    expect(scanText('https://rpc.example.com/?apikey=abcdefghijklmnop123', 'README.md')).not.toHaveLength(0)
+    // assembled at runtime so this file never contains a credential-shaped URL itself
+    const userinfo = ['user', 'not-a-real-password'].join(':')
+    const query = ['api', 'key=', 'x'.repeat(20)].join('')
+    expect(scanText(`BEE=https://${userinfo}@bee.example.com`, 'README.md')).not.toHaveLength(0)
+    expect(scanText(`https://rpc.example.com/?${query}`, 'README.md')).not.toHaveLength(0)
   })
 
   it('does not flag public Swarm references, topics or empty env placeholders', () => {
