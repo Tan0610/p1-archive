@@ -47,8 +47,8 @@ npm run archive -- doctor           # is the node awake, light, funded?
 ## Publish
 
 ```bash
-npm run archive -- quote --size 1gb --days 7         # what a batch would cost (nothing spent)
-npm run archive -- buy   --size 1gb --days 7 --yes   # spends xBZZ; waits until the batch is usable
+npm run archive -- quote --size 100mb --days 7         # what a batch would cost (nothing spent)
+npm run archive -- buy   --size 100mb --days 7 --yes   # spends xBZZ; waits until the batch is usable
 
 npm run archive -- publish --dry-run                 # stages the edition, reads the feed, spends nothing
 npm run preview:edition                              # look at the staged gallery on http://127.0.0.1:4174
@@ -57,6 +57,10 @@ npm run archive -- publish                           # upload → read feed inde
 npm run archive -- status                            # live paid-until + newest feed index
 npm run archive -- verify --gateway                  # can the public gateway serve the address yet?
 ```
+
+Prices move with the network. In September 2026 the smallest batch (100 MB) cost about
+0.09 xBZZ per day and 1 GB about 0.37 xBZZ per day, so a gift-code wallet should start small and
+top up later. Always `quote` first.
 
 `publish` writes two **tracked** files: `archive.json` and `PUBLISHED.md`. They hold only public
 values — the feed owner *address*, the topic and the archive address. Commit them; they are the
