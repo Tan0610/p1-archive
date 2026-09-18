@@ -9,6 +9,7 @@ type FlagState = { done: Set<StepId>; failed: boolean }
 export function PublishPage({ status, onFlags, onPublished }: { status: Status | null; onFlags: (f: FlagState) => void; onPublished: () => Promise<void> }) {
   const [folios, setFolios] = useState<Folio[] | null>(null)
   const [bytes, setBytes] = useState(0)
+  const [dir, setDir] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [batchId, setBatchId] = useState('')
   const [agree, setAgree] = useState(false)
@@ -22,6 +23,7 @@ export function PublishPage({ status, onFlags, onPublished }: { status: Status |
       .then((r) => {
         setFolios(r.folios)
         setBytes(r.bytes)
+        setDir(r.dir.split('\\').join('/'))
       })
       .catch((e: Error) => setLoadError(e.message))
   }, [])
@@ -70,8 +72,8 @@ export function PublishPage({ status, onFlags, onPublished }: { status: Status |
       <div className="content">
         <h1>Publish a new edition</h1>
         <p className="lede">
-          Everything in <code>{status ? 'samples/folios' : 'the folios folder'}</code> is uploaded as one collection, together with a gallery page, a catalogue
-          of checksums, and a reader. Then the archive’s feed is moved to point at it. The address you hand out stays the same.
+          Everything in <code>{dir ?? 'the folios folder'}</code> is uploaded as one collection, together with a gallery page, a catalogue of checksums, and a
+          reader. Then the archive’s feed is moved to point at it. The address you hand out stays the same.
         </p>
 
         <div className="section">
