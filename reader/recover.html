@@ -518,7 +518,7 @@ async function find(event) {
   verified.clear()
   $('go').disabled = true
   try {
-    let reference, feedFacts = null
+    let reference, feedFacts = null, where = ""
     if (mode === 'feed') {
       setStatus('Asking the network which updates exist…')
       const feed = await resolveWithBeads(gateway, $('owner').value, $('topic').value)
@@ -528,7 +528,8 @@ async function find(event) {
       }
       reference = feed.reference
       feedFacts = feed
-      setStatus(`Newest edition is update #${feed.index}, written ${new Date(feed.timestamp * 1000).toLocaleString()}.`)
+      where = `Newest edition is update #${feed.index}, written ${new Date(feed.timestamp * 1000).toLocaleString()}. `
+      setStatus(where)
     } else {
       reference = $('manifest').value.trim().replace(/^0x/i, '')
       if (!/^[0-9a-f]{64}$/i.test(reference)) throw new Error('An archive address is 64 hex characters.')
@@ -537,7 +538,7 @@ async function find(event) {
     const catalogue = await fetchCatalogue(gateway, reference)
     current = { gateway, reference, catalogue }
     render(catalogue, feedFacts, reference)
-    setStatus(`Found ${catalogue.folios.length} files. Nothing has been downloaded yet.`)
+    setStatus(`${where}It lists ${catalogue.folios.length} files; nothing has been downloaded yet.`)
   } catch (e) {
     setStatus(explain(e), true)
   } finally {
