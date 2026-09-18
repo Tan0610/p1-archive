@@ -15,8 +15,27 @@ export interface DoctorReport {
   /** Light (or full / dev) nodes can buy stamps and upload. Ultra-light cannot. */
   canUpload: boolean
   wallet: { address: string; xbzz: string; xdai: string } | null
+  /** xBZZ in the node's chequebook, which pays peers for bandwidth. null if it could not be read. */
+  chequebook: { availableXbzz: string; empty: boolean } | null
   problems: string[]
   hints: string[]
+}
+
+const DEPOSIT_HINT =
+  'deposit a little xBZZ into the chequebook (e.g. 0.1 xBZZ: ' +
+  'curl -X POST "http://localhost:1633/chequebook/deposit?amount=1000000000000000") and publish again.'
+
+/** Not a blocker: a small edition usually fits in the free bandwidth allowance peers grant each other. */
+export const CHEQUEBOOK_EMPTY_HINT =
+  "The chequebook is empty (0 xBZZ), so uploads rely on peers' free bandwidth allowance. That is usually enough for a " +
+  'small edition. If an upload fails with "insufficient funds" or "overdraft", ' +
+  DEPOSIT_HINT
+
+/** Bandwidth-accounting failures read as cryptic errors; say what they mean and what to do. */
+export function explainBandwidthError(error: unknown): unknown {
+  const message = error instanceof Error ? error.message : String(error)
+  if (!/insufficient funds|overdraft/i.test(message)) return error
+  return new Error(`${message} — the node has run out of bandwidth credit with its peers. To fix it, ${DEPOSIT_HINT}`, { cause: error })
 }
 
 /**
@@ -34,6 +53,7 @@ export async function doctor(bee: Bee): Promise<DoctorReport> {
     mode: null,
     canUpload: false,
     wallet: null,
+    chequebook: null,
     problems: [],
     hints: [],
   }
@@ -90,6 +110,15 @@ export async function doctor(bee: Bee): Promise<DoctorReport> {
     }
   } catch {
     /* 503 while syncing — already reported above */
+  }
+
+  try {
+    const cheques = await bee.chequebook.getBalance()
+    const empty = cheques.availableBalance.toPLURBigInt() === 0n
+    report.chequebook = { availableXbzz: cheques.availableBalance.toSignificantDigits(4), empty }
+    if (empty && report.canUpload) report.hints.push(CHEQUEBOOK_EMPTY_HINT)
+  } catch {
+    /* no chequebook yet (ultra-light) or 503 while syncing — informational only */
   }
 
   return report

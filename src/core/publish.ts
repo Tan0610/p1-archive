@@ -1,5 +1,5 @@
 import { Reference, type Bee } from '@ethersphere/bee-js'
-import { assertCanPublish, doctor } from './bee.js'
+import { assertCanPublish, CHEQUEBOOK_EMPTY_HINT, doctor, explainBandwidthError } from './bee.js'
 import { CATALOGUE_SCHEMA, type Catalogue } from '../shared/catalogue-schema.js'
 import { scanFolios, totalBytes } from './catalogue.js'
 import { toCollectionEntries, uploadCollection } from './collection.js'
@@ -66,6 +66,8 @@ export async function publish(opts: PublishOptions): Promise<PublishResult> {
     message: health.reachable ? `Bee ${health.version} is up, mode: ${health.mode ?? 'unknown'}.` : 'No node answered (fine for a dry run).',
     data: { ...health },
   })
+  // Preflight, not a blocker: with nothing in the chequebook, uploads live on the free bandwidth allowance.
+  if (health.chequebook?.empty) emit({ step: 'node', status: 'warn', message: CHEQUEBOOK_EMPTY_HINT })
 
   // 2. Signer (the only secret; stays in Node, never printed)
   emit({ step: 'signer', status: 'start', message: 'Loading the feed signer…' })
@@ -195,13 +197,17 @@ export async function publish(opts: PublishOptions): Promise<PublishResult> {
 
   // 6. Upload the edition as a collection (one manifest reference for the whole folder)
   emit({ step: 'upload', status: 'start', message: `Uploading ${entries.length} files to Swarm…` })
-  const uploaded = await uploadCollection(bee, batchId!, dir)
+  const uploaded = await uploadCollection(bee, batchId!, dir).catch((e: unknown) => {
+    throw explainBandwidthError(e)
+  })
   const collectionReference = uploaded.reference.toHex()
   emit({ step: 'upload', status: 'done', message: `Edition snapshot: ${collectionReference}`, data: { collectionReference } })
 
   // 7. Read the feed from the network, then write the reference to the next slot
   emit({ step: 'feed', status: 'start', message: 'Asking the network for the next feed index, then writing…' })
-  const fed = await publishToFeed(bee, signer.key, batchId!, topic, uploaded.reference)
+  const fed = await publishToFeed(bee, signer.key, batchId!, topic, uploaded.reference).catch((e: unknown) => {
+    throw explainBandwidthError(e)
+  })
   emit({
     step: 'feed',
     status: 'done',

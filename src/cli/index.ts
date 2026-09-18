@@ -56,6 +56,7 @@ async function cmdDoctor(bee: Bee): Promise<void> {
     kv('wallet', r.wallet.address)
     kv('xBZZ / xDAI', `${r.wallet.xbzz} / ${r.wallet.xdai}`)
   }
+  if (r.chequebook) kv('chequebook', r.chequebook.empty ? c.saffron('0 xBZZ (uploads use the free allowance)') : `${r.chequebook.availableXbzz} xBZZ`)
   for (const p of r.problems) console.log('  ' + c.saffron('! ') + p)
   for (const h of r.hints) console.log('  ' + c.dim('→ ' + h))
   if (r.reachable && r.canUpload && r.ready) console.log('\n  ' + c.green('Ready to buy a stamp and publish.'))

@@ -35,6 +35,7 @@ export interface DoctorReport {
   mode: string | null
   canUpload: boolean
   wallet: { address: string; xbzz: string; xdai: string } | null
+  chequebook: { availableXbzz: string; empty: boolean } | null
   problems: string[]
   hints: string[]
 }
