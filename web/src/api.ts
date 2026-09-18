@@ -6,8 +6,13 @@ const WRITE_HEADERS = { 'content-type': 'application/json', 'x-archive-client': 
 
 async function readJson<T>(res: Response): Promise<T> {
   const body = (await res.json().catch(() => ({}))) as T & { error?: string }
-  if (!res.ok) throw new Error(body.error ?? `The local server answered ${res.status}`)
+  if (!res.ok) throw new Error(body.error ?? serverDown(res.status))
   return body
+}
+
+// With no JSON error body, a 5xx almost always means the dev proxy found nobody listening.
+function serverDown(status: number): string {
+  return status >= 500 ? `The local archive server is not answering (HTTP ${status}). Start it with: npm run serve` : `The local server answered ${status}`
 }
 
 async function get<T>(url: string): Promise<T> {
@@ -50,7 +55,7 @@ export async function publishStream(opts: { dryRun: boolean; batchId?: string },
   })
   if (!res.ok || !res.body) {
     const body = (await res.json().catch(() => ({}))) as { error?: string }
-    h.onFailure(body.error ?? `The local server answered ${res.status}`)
+    h.onFailure(body.error ?? serverDown(res.status))
     return
   }
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
