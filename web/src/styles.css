@@ -1,0 +1,885 @@
+/* Scriptorium — the publishing desk for the Spiti folios.
+   Ground: bhojpatra blush (the pink inner bark of Himalayan birch), with lenticels.
+   Pigments: the lapis, malachite, orpiment and cinnabar of monastery lintels.
+   One loud thing: marginal notes in three hands. Everything else stays quiet. */
+
+:root {
+  --bark: #f3dccb;
+  --bark-deep: #e6bea3;
+  --paper: #fbf3ea;
+  --soot: #2b1d17;
+  --soot-soft: #5d463b;
+  --rule: #cfa58c;
+  --lapis: #2b4c9b;
+  --malachite: #3f7f5e;
+  --orpiment: #e2a93b;
+  --cinnabar: #b8322a;
+
+  --display: 'Rozha One', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --body: 'Alegreya', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --tibetan: 'Noto Serif Tibetan', 'Microsoft Himalaya', serif;
+
+  --wobbly: 4px 16px 5px 20px / 16px 4px 20px 5px;
+  --pill: 24px 18px 26px 16px / 20px 24px 18px 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  background: var(--bark);
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--soot);
+  font: 1.125rem/1.6 var(--body);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='360'%3E%3Cg stroke='%238a5a45' stroke-linecap='round' opacity='.2'%3E%3Cpath d='M30 40h34' stroke-width='2.4'/%3E%3Cpath d='M250 22h18' stroke-width='1.6'/%3E%3Cpath d='M160 120h42' stroke-width='2'/%3E%3Cpath d='M360 150h22' stroke-width='2.6'/%3E%3Cpath d='M60 230h16' stroke-width='1.4'/%3E%3Cpath d='M280 270h38' stroke-width='2.2'/%3E%3Cpath d='M120 320h24' stroke-width='1.8'/%3E%3C/g%3E%3C/svg%3E"),
+    var(--bark);
+}
+a {
+  color: var(--lapis);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+:focus-visible {
+  outline: 3px solid var(--lapis);
+  outline-offset: 3px;
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+code,
+.mono {
+  font-family: var(--mono);
+  font-size: 0.82em;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.08;
+}
+h1 {
+  font-size: clamp(2.3rem, 5vw, 3.6rem);
+  letter-spacing: -0.01em;
+  max-width: 18ch;
+}
+h2 {
+  font-size: 1.7rem;
+}
+h3 {
+  font-size: 1.3rem;
+}
+p {
+  margin: 0 0 0.8em;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- shell: a cord on the left, the leaf on the right ---------- */
+.shell {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.page {
+  padding: 18px 32px 96px 12px;
+  min-width: 0;
+}
+
+.cord {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 28px 0 0 18px;
+}
+.cord::before {
+  /* the string itself, with a slight hand-drawn wobble */
+  content: '';
+  position: absolute;
+  left: 46px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: repeating-linear-gradient(180deg, #7a3b27 0 7px, #9b5238 7px 12px);
+  border-radius: 2px;
+  transform: rotate(0.4deg);
+}
+.cord .knot {
+  position: relative;
+  margin: 0 0 18px 34px;
+  width: 28px;
+  height: 20px;
+  border-radius: 50%;
+  background: #7a3b27;
+}
+.cord ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  position: relative;
+}
+.tag {
+  --swing: -3deg;
+  position: relative;
+  display: block;
+  width: 128px;
+  margin-left: 26px;
+  padding: 9px 12px 10px 30px;
+  background: var(--paper);
+  color: var(--soot);
+  text-decoration: none;
+  font-size: 1.02rem;
+  line-height: 1.15;
+  clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
+  transform-origin: 20px 50%;
+  transform: rotate(var(--swing));
+  cursor: pointer;
+  border: 0;
+  text-align: left;
+  filter: drop-shadow(0 2px 0 rgba(43, 29, 23, 0.18));
+}
+.tag::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bark);
+  box-shadow: inset 0 0 0 1.5px var(--soot-soft);
+}
+.tag small {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--soot-soft);
+}
+.cord li:nth-child(2n) .tag {
+  --swing: 2.5deg;
+}
+.cord li:nth-child(3n) .tag {
+  --swing: -1deg;
+}
+.tag:hover {
+  animation: swing 0.9s ease-in-out;
+}
+.tag[aria-current='page'] {
+  background: var(--soot);
+  color: var(--bark);
+}
+.tag[aria-current='page'] small {
+  color: #e8cdbb;
+}
+.tag[aria-current='page']::before {
+  background: var(--cinnabar);
+  box-shadow: none;
+}
+@keyframes swing {
+  0% {
+    transform: rotate(var(--swing));
+  }
+  30% {
+    transform: rotate(calc(var(--swing) + 6deg));
+  }
+  60% {
+    transform: rotate(calc(var(--swing) - 4deg));
+  }
+  100% {
+    transform: rotate(var(--swing));
+  }
+}
+
+/* ---------- top: prayer flags + the lamp ---------- */
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+.flags {
+  position: relative;
+  height: 70px;
+}
+.flags svg {
+  width: 100%;
+  height: 70px;
+  overflow: visible;
+}
+.flag {
+  transform-box: fill-box;
+  transform-origin: top center;
+  transition: fill 0.4s ease;
+}
+.flag.up {
+  animation: flutter 1.6s ease-in-out 1;
+}
+@keyframes flutter {
+  0% {
+    transform: skewX(0) scaleY(0.6);
+  }
+  25% {
+    transform: skewX(-8deg) scaleY(1.05);
+  }
+  50% {
+    transform: skewX(6deg) scaleY(0.98);
+  }
+  75% {
+    transform: skewX(-3deg) scaleY(1);
+  }
+  100% {
+    transform: skewX(0) scaleY(1);
+  }
+}
+
+.lamp {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 250px);
+  gap: 10px;
+  align-items: center;
+  padding: 8px 14px 8px 8px;
+  background: var(--paper);
+  border-radius: var(--wobbly);
+  border: 1.5px solid var(--soot);
+}
+.lamp p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+.lamp strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  display: block;
+}
+.lamp.urgent,
+.lamp.expired {
+  border-color: var(--cinnabar);
+}
+.lamp .flame {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+.lamp.ok .flame,
+.lamp.soon .flame {
+  animation: flicker 3.2s ease-in-out infinite;
+}
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1, 1) rotate(0);
+  }
+  40% {
+    transform: scale(0.94, 1.04) rotate(-2deg);
+  }
+  70% {
+    transform: scale(1.03, 0.97) rotate(1.5deg);
+  }
+}
+
+/* ---------- a leaf of content with a margin for notes ---------- */
+.leaf-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 700px) 230px;
+  gap: 28px 40px;
+  align-items: start;
+}
+.leaf-grid > .content {
+  min-width: 0;
+}
+.margin {
+  display: grid;
+  gap: 30px;
+  padding-top: 60px;
+}
+.hand {
+  font-family: var(--hand);
+  font-weight: 500;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  margin: 0;
+}
+.hand.soot {
+  color: var(--soot);
+  transform: rotate(-1.5deg);
+}
+.hand.cinnabar {
+  color: var(--cinnabar);
+  transform: rotate(2deg) translateX(8px);
+}
+.hand.lapis {
+  color: var(--lapis);
+  transform: rotate(-3deg);
+}
+.hand .arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.lede {
+  color: var(--soot-soft);
+  max-width: 60ch;
+  font-size: 1.15rem;
+  margin-top: 14px;
+}
+.section {
+  margin-top: 36px;
+}
+.section > h2 {
+  margin-bottom: 12px;
+}
+
+/* ---------- buttons & inputs ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  cursor: pointer;
+  padding: 12px 20px 13px;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: var(--pill);
+  background: var(--soot);
+  color: var(--bark);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+.btn:hover:not(:disabled) {
+  transform: rotate(-1.5deg) scale(1.03);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.quiet {
+  background: transparent;
+  color: var(--soot);
+  box-shadow: inset 0 0 0 1.5px var(--soot);
+}
+.btn.danger {
+  background: var(--cinnabar);
+  color: #fff4ec;
+}
+.btn.small {
+  padding: 8px 14px 9px;
+  font-size: 0.92rem;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.98rem;
+}
+.field small {
+  color: var(--soot-soft);
+}
+.field input,
+.field select {
+  padding: 9px 12px;
+  border: 1.5px solid var(--soot);
+  background: #fff;
+  border-radius: 3px 9px 3px 9px;
+  min-width: 0;
+}
+.field input.mono {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.check-line {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 1rem;
+  max-width: 56ch;
+}
+.check-line input {
+  margin-top: 6px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cinnabar);
+}
+
+/* ---------- cards that are not all the same card ---------- */
+.slip {
+  background: var(--paper);
+  padding: 18px 20px;
+  border-left: 4px solid var(--orpiment);
+  box-shadow: 0 3px 0 rgba(43, 29, 23, 0.08);
+}
+.slip.malachite {
+  border-left-color: var(--malachite);
+}
+.slip.cinnabar {
+  border-left-color: var(--cinnabar);
+}
+.slip.lapis {
+  border-left-color: var(--lapis);
+}
+.box {
+  border: 1.5px solid var(--soot);
+  border-radius: var(--wobbly);
+  padding: 18px 20px;
+  background: rgba(251, 243, 234, 0.6);
+}
+.box.dashed {
+  border-style: dashed;
+  background: transparent;
+}
+
+.ledger {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 18px;
+  margin: 0;
+  font-size: 1rem;
+}
+.ledger dt {
+  color: var(--soot-soft);
+}
+.ledger dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* the big sentence on the node screen */
+.verdict {
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  line-height: 1.15;
+  margin: 22px 0 18px;
+  max-width: 22ch;
+}
+.verdict .dot {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  margin-right: 0.3em;
+  vertical-align: 0.08em;
+  background: var(--malachite);
+}
+.verdict.bad .dot {
+  background: var(--cinnabar);
+}
+.verdict.wait .dot {
+  background: var(--orpiment);
+}
+
+/* ---------- batches: strips of bark with ink fill for usage ---------- */
+.batches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+}
+.batch {
+  position: relative;
+  background: var(--paper);
+  padding: 16px 18px 16px 22px;
+  border-radius: 3px 12px 4px 14px;
+  transform: rotate(var(--tilt, 0deg));
+}
+.batch::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--level, var(--malachite));
+}
+.batch[data-level='soon'] {
+  --level: var(--orpiment);
+}
+.batch[data-level='urgent'],
+.batch[data-level='expired'] {
+  --level: var(--cinnabar);
+}
+.batch[data-level='unknown'] {
+  --level: var(--rule);
+}
+.batch header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  align-items: baseline;
+}
+.usage {
+  height: 12px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(43, 29, 23, 0.08) 9px 10px), #efdccd;
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+.usage span {
+  display: block;
+  height: 100%;
+  background: var(--soot);
+  border-radius: 6px 3px 3px 6px;
+}
+
+/* ---------- folios on the publish screen ---------- */
+.folios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 22px;
+}
+.folio {
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.25s ease;
+}
+.folio:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+.folio img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 5px 8px rgba(80, 40, 20, 0.16));
+}
+.folio .caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 14px;
+  padding: 6px 6px 0;
+  font-size: 1rem;
+}
+.folio .caption span {
+  color: var(--soot-soft);
+}
+.notes-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.notes-strip li {
+  list-style: none;
+  background: var(--paper);
+  padding: 6px 12px;
+  font-size: 0.92rem;
+  border-left: 3px solid var(--malachite);
+  transform: rotate(var(--tilt, 0deg));
+}
+
+.log {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.log li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 1rem;
+  align-items: start;
+}
+.log .mark {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+.log .done .mark {
+  background: var(--malachite);
+}
+.log .warn .mark {
+  background: var(--orpiment);
+  color: var(--soot);
+}
+.log .info .mark {
+  background: var(--lapis);
+}
+.log .fail .mark {
+  background: var(--cinnabar);
+}
+.log .msg {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- the address plate ---------- */
+.plate {
+  position: relative;
+  margin: 26px 0 10px;
+  padding: 26px 26px 22px;
+  background: var(--soot);
+  color: var(--bark);
+  border-radius: 6px 22px 8px 26px / 22px 6px 26px 8px;
+  transform: rotate(-0.6deg);
+}
+.plate .label {
+  font-family: var(--hand);
+  font-size: 1.45rem;
+  color: var(--orpiment);
+  margin: 0 0 6px;
+}
+.plate .addr {
+  font: 1.05rem/1.55 var(--mono);
+  overflow-wrap: anywhere;
+  letter-spacing: 0.02em;
+  margin: 0 0 16px;
+}
+.plate .addr span:nth-child(odd) {
+  color: #fff6ee;
+}
+.plate .addr span:nth-child(even) {
+  color: #e8c7b2;
+}
+.plate .btn {
+  background: var(--bark);
+  color: var(--soot);
+}
+.plate .btn.quiet {
+  background: transparent;
+  color: var(--bark);
+  box-shadow: inset 0 0 0 1.5px var(--bark);
+}
+.plate-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 148px;
+  gap: 24px;
+  align-items: center;
+}
+.qr {
+  width: 148px;
+  height: 148px;
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 8px;
+}
+.qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ---------- seals ---------- */
+.seal {
+  width: 66px;
+  height: 66px;
+  border-radius: 46% 54% 50% 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 6px;
+  background: var(--cinnabar);
+  color: #fbe9dc;
+  font: 700 0.72rem/1.05 var(--body);
+  transform: rotate(-12deg);
+  box-shadow:
+    inset 0 0 0 3px rgba(251, 233, 220, 0.5),
+    0 2px 5px rgba(80, 20, 10, 0.3);
+  animation: stamp 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.seal.bad {
+  background: var(--soot);
+}
+.seal.wait {
+  background: transparent;
+  color: var(--soot-soft);
+  border: 1.5px dashed var(--soot-soft);
+  box-shadow: none;
+  animation: none;
+}
+@keyframes stamp {
+  from {
+    transform: rotate(-30deg) scale(2);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-12deg) scale(1);
+    opacity: 0.95;
+  }
+}
+
+/* ---------- recover ---------- */
+.mala {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 18px;
+  margin: 14px 0 6px;
+}
+.bead {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d9bfae;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12);
+}
+.bead.yes {
+  background: var(--malachite);
+}
+.bead.no {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--soot-soft);
+}
+.recovered {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.recovered li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 70px;
+  gap: 16px;
+  align-items: center;
+  background: var(--paper);
+  padding: 10px 12px;
+  transform: rotate(var(--tilt, 0deg));
+}
+.recovered img {
+  width: 150px;
+  display: block;
+}
+.recovered .thumbless {
+  font-family: var(--hand);
+  color: var(--malachite);
+  font-size: 1.2rem;
+}
+
+.error {
+  color: var(--cinnabar);
+  font-weight: 700;
+}
+.muted {
+  color: var(--soot-soft);
+}
+.hash {
+  font: 0.78rem/1.35 var(--mono);
+  color: var(--soot-soft);
+  overflow-wrap: anywhere;
+}
+.tibetan {
+  font-family: var(--tibetan);
+  color: var(--cinnabar);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* ---------- small screens: the cord runs across the top ---------- */
+@media (max-width: 980px) {
+  .leaf-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .margin {
+    padding-top: 0;
+    grid-auto-flow: row;
+  }
+}
+@media (max-width: 760px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cord {
+    position: static;
+    height: auto;
+    padding: 14px 0 6px;
+    overflow-x: auto;
+  }
+  .cord::before {
+    left: 0;
+    right: 0;
+    top: 30px;
+    bottom: auto;
+    width: auto;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, #7a3b27 0 7px, #9b5238 7px 12px);
+  }
+  .cord .knot {
+    display: none;
+  }
+  .cord ul {
+    display: flex;
+    gap: 8px;
+    padding: 18px 12px 8px;
+  }
+  .tag {
+    width: auto;
+    min-width: 104px;
+    margin: 0;
+    transform-origin: 50% 0;
+    clip-path: polygon(0 10px, 50% 0, 100% 10px, 100% 100%, 0 100%);
+    padding: 18px 12px 8px;
+  }
+  .tag::before {
+    left: calc(50% - 4px);
+    top: 6px;
+  }
+  .page {
+    padding: 8px 16px 80px;
+  }
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plate-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recovered li {
+    grid-template-columns: minmax(0, 1fr) 64px;
+  }
+  .recovered li > :first-child {
+    grid-column: 1 / -1;
+  }
+  .recovered img {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .folio,
+  .folio:hover,
+  .batch,
+  .plate {
+    transform: none;
+  }
+}
