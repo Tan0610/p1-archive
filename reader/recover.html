@@ -397,14 +397,18 @@ async function readFeedUpdate(gateway, topic, owner, index, opts = {}) {
 /**
  * Finds the newest index of a sequence feed by probing chunks: gallop 1, 2, 4, 8…
  * until a miss, then binary search. Returns -1n when the feed has no updates.
+ *
+ * Never uses Bee's feed lookup (GET /feeds/…), which answers 404 both for an
+ * empty feed and for a lookup that timed out. Update #0 decides "no updates",
+ * so that one read gets a few more retries before a miss is believed.
  */
 async function findLatestIndex(gateway, topic, owner, { hint, onProbe, signal } = {}) {
-  const exists = async (i) => {
+  const exists = async (i, retries = 1) => {
     onProbe?.(i)
     const address = bytesToHex(feedUpdateAddress(topic, owner, i))
-    return (await fetchChunk(gateway, address, { signal })) !== null
+    return (await fetchChunk(gateway, address, { retries, signal })) !== null
   }
-  if (!(await exists(0n))) return -1n
+  if (!(await exists(0n, 3))) return -1n
   let lo = 0n
   let hi = null
   if (hint !== undefined && hint !== null && BigInt(hint) > 0n) {

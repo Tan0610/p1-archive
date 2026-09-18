@@ -144,6 +144,17 @@ describe('finding the newest update by probing chunks', () => {
     expect(await findLatestIndex('https://gw', topic, owner())).toBe(4n)
   })
 
+  it('does not call a feed empty when update #0 is slow to arrive (two misses, then found)', async () => {
+    fakeGateway(3)
+    const real = globalThis.fetch
+    let misses = 2
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string | URL) => (misses-- > 0 ? new Response('', { status: 404 }) : real(url))),
+    )
+    expect(await findLatestIndex('https://gw', topic, owner())).toBe(3n)
+  })
+
   it('uses a hint to skip ahead', async () => {
     const { calls } = fakeGateway(40)
     expect(await findLatestIndex('https://gw', topic, owner(), { hint: 40 })).toBe(40n)
