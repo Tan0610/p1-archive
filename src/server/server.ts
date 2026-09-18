@@ -23,6 +23,12 @@ import { buyBatch, describeBatch, extendBatch, listBatches, quoteBuy, quoteExten
 
 const CLIENT_HEADER = 'x-archive-client'
 
+/**
+ * One publish at a time. Two overlapping publishes would both read the same
+ * next index from the network and race to write that slot.
+ */
+let publishing = false
+
 function json(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
   res.end(JSON.stringify(body, (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v)))
@@ -137,6 +143,8 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
           const body = await readBody(req)
           const dryRun = body.dryRun !== false
           if (!dryRun && body.confirm !== true) return json(res, 400, { error: 'A real publish uploads and stamps data; confirm: true is required.' })
+          if (publishing) return json(res, 409, { error: 'A publish is already running. Wait for it to finish.' })
+          publishing = true
           // Server-sent events: one line per step, so the UI can show the flags going up.
           res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' })
           const send = (event: string, data: unknown) =>
@@ -152,6 +160,8 @@ async function handle(req: IncomingMessage, res: ServerResponse, config: AppConf
             send('result', result)
           } catch (e) {
             send('failure', { message: (e as Error).message })
+          } finally {
+            publishing = false
           }
           res.end()
           return
