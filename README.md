@@ -20,6 +20,29 @@ it is honest, everywhere, about how long that storage is actually paid for.
    edition N-1 …   │  still retrievable while its postage is paid
 ```
 
+## The published identifiers (where to find them)
+
+Everything a stranger needs is public and lives in two **tracked** files at the repository root,
+written by `npm run archive -- publish` (`src/core/record.ts` → `writeArchiveJson`,
+`writePublishedMd`) and committed as the hand-over:
+
+| What | `archive.json` field | Also in |
+|---|---|---|
+| **Archive address** = feed manifest reference (hand this out) | `address.feedManifest` | `PUBLISHED.md`, CLI "ARCHIVE ADDRESS", UI *The address* |
+| Feed owner (public address of the feed signer) | `feed.owner` | `PUBLISHED.md` (copyable code block) |
+| Feed topic (32 bytes, hex) | `feed.topic` | `PUBLISHED.md` (copyable code block) |
+| Postage batch + paid-until estimate | `storage.batchId`, `storage.paidUntil` | `PUBLISHED.md` |
+
+The topic is deterministic — keccak256 of the text `tsering/himalayan-manuscripts/v1`:
+
+```
+86cbe92d33d89dc878e0991ed53a92aa27905b4e21fee1a78c64683eab73f415
+```
+
+The owner and the archive address only exist once the feed signer has been created and the
+first edition published, so they are not invented here: until then `archive.json` and
+`PUBLISHED.md` are simply absent, and `status`/the UI say "nothing published yet".
+
 ## What you get
 
 | | |
@@ -105,18 +128,18 @@ with the time it was read; when the node doesn't answer the tool says *unknown* 
 guessing. Anyone can top up the batch whose ID is in `archive.json`. More in
 [`docs/STORAGE-HONESTY.md`](docs/STORAGE-HONESTY.md).
 
-## Where each requirement lives
+## How each check is met
 
-| Requirement | Where |
-|---|---|
-| Content behind a feed; the address shown is the feed's | `src/core/feed.ts` `ensureFeedManifest` → `publish.ts` returns it as `archiveAddress`; CLI prints it as "ARCHIVE ADDRESS", UI `AddressPage`; the edition reference is only ever labelled a snapshot |
-| Feed owner + topic in a tracked file | `archive.json` → `feed.owner`, `feed.topic`, and `PUBLISHED.md` (written by `src/core/record.ts`) |
-| Next index read from the network before each update | `src/core/feed.ts` `publishToFeed`: `resolveNextIndex` (→ `bee.feed.fetchLatestUpdate` → `feedIndexNext`) immediately before `writer.uploadReference(batchId, collectionReference, { index: next })`; tests in `test/feed-index.test.ts`; ESLint bans literal indexes |
-| Contents larger than a chunk written by reference | `src/core/collection.ts` uploads the edition as a collection; `feed.ts` writes only its reference with `uploadReference`; `uploadPayload` is banned by ESLint and a test |
-| Recovery from published identifiers only | `src/recover/recover.ts` + `src/recover/main.ts` (`npm run recover`), `reader/recover.html`, `docs/RECOVERY.md`; isolation enforced in `test/guarantees.test.ts` and `eslint.config.js` |
-| Batch lifetime read from the node and shown | `src/core/stamps.ts` `describeBatch`/`summarise` → `src/core/ttl.ts`; shown by CLI `status`/`stamps`/`publish`, the UI lamp, `archive.json.storage`, `PUBLISHED.md`, and each edition's `catalogue.json` |
-| Empty feed handled | `feed.ts` `resolveNextIndex` (404 → index 0, first run; other errors abort), `readFeedHead`; `recover.ts` reports "no updates yet" and exits 2; `swarm-lite.js` `findLatestIndex` returns −1 |
-| No secrets in tracked files | `.gitignore` (`.env`, `.secrets/`), `.env.example` with an empty key, `scripts/check-secrets.ts` (`npm run check:secrets`) |
+| # | Check | Where in the code |
+|---|---|---|
+| 1 | Content published behind a feed; the address shown is the feed's | `src/core/feed.ts:61` `ensureFeedManifest` → `bee.feed.createManifest(batchId, topic, owner)`; `src/core/publish.ts:162` returns it as `archiveAddress`; CLI prints it as "ARCHIVE ADDRESS" (`src/cli/index.ts:141`); UI *The address* (`web/src/pages/AddressPage.tsx`). The edition's collection reference is only ever labelled a snapshot |
+| 2 | Feed owner and topic in a tracked, copyable file | `archive.json` (`feed.owner`, `feed.topic`, `address.feedManifest`) and `PUBLISHED.md` (owner and topic each in their own code block), written by `src/core/record.ts:60` `writeArchiveJson` and `:90` `writePublishedMd` from `publish.ts:231`. See [The published identifiers](#the-published-identifiers-where-to-find-them) |
+| 3 | Next feed index read from the network before every update | `src/core/feed.ts:79` `publishToFeed`: `resolveNextIndex` (`:43`, `bee.feed.fetchLatestUpdate` → `feedIndexNext`) runs immediately before `writer.uploadReference(batchId, collectionReference, { index: next })` (`:89`). No literal, no counter, nothing read from `archive.json`. Tests: `test/feed-index.test.ts` (read-then-write order, 500 ≠ empty feed). ESLint bans literal indexes in `src/` |
+| 4 | Content larger than a chunk uploaded separately; the feed gets only its reference | `src/core/collection.ts:43` `uploadCollection` → `bee.collection.upload` (whole edition folder); `publish.ts:198`→`:204` passes `uploaded.reference` to `publishToFeed`, which calls `uploadReference`. `uploadPayload` is banned by ESLint (`eslint.config.js`) and `test/guarantees.test.ts` |
+| 5 | Recovery from published identifiers only | `src/recover/main.ts` (`npm run recover -- <owner> <topic>` or `--manifest <ref>`, plus `--bee`) → `src/recover/recover.ts:85` `recover`. Reads no `.env`, `archive.json`, key or local index; the folio list comes from the edition's own `catalogue.json` and manifest. Import isolation enforced by `eslint.config.js` and `test/guarantees.test.ts`. Browser version: `reader/recover.html` |
+| 6 | Batch remaining lifetime read from the node and surfaced | `src/core/stamps.ts:41` `describeBatch` → `bee.stamp.get(id)`; `summarise` (`:21`) uses the node's `duration` (batchTTL) → `src/core/ttl.ts` `termFromTtlSeconds`/`honestSentence`. Shown by CLI `status`/`stamps`/`publish`, the UI lamp, and written to `archive.json.storage`, `PUBLISHED.md` and each edition's `catalogue.json` (`publish.ts:219` re-reads it live before writing). Unknown → says "unknown", never a constant |
+| 7 | Reading a feed with no updates has defined first-run behaviour | `src/core/feed.ts:43` `resolveNextIndex`: HTTP 404 → index 0, `firstRun: true`; any other error aborts rather than guessing. `readFeedHead` (`:107`) → `{ empty: true }`. `src/recover/recover.ts:154` → status `empty-feed`, exit code 2. `reader/swarm-lite.js:254` `findLatestIndex` → `-1n` → "no updates yet" |
+| 8 | No secrets in tracked files | Feed key only in gitignored `.secrets/feed-key.hex` or `.env` (`src/core/signer.ts`); `.env.example` has an empty key; test keys are generated with `randomBytes` at runtime; `scripts/check-secrets.ts` (`npm run check:secrets`) scans every committable file and runs in `npm run check` |
 
 ## Checks
 
