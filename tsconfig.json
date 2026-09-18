@@ -1,0 +1,6 @@
+{
+  "files": [],
+  "references": [],
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true }
+}
