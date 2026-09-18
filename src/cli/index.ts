@@ -17,8 +17,8 @@ ${c.bold('archive')} — keep Tsering's folios reachable after the app is gone
 
   ${c.saffron('doctor')}                         is the node up, light, funded?
   ${c.saffron('stamps')}                         list postage batches and how long each is paid for
-  ${c.saffron('quote')}   --size 100mb --days 14 what a new batch would cost (no spending)
-  ${c.saffron('buy')}     --size 100mb --days 14 --yes     buy a batch (spends xBZZ)
+  ${c.saffron('quote')}   --size 100mb --days 7 what a new batch would cost (no spending)
+  ${c.saffron('buy')}     --size 100mb --days 7 --yes     buy a batch (spends xBZZ)
   ${c.saffron('extend')}  --batch <id> --days 7 --yes     top up an existing batch (spends xBZZ)
   ${c.saffron('publish')} [--dir samples/folios] [--batch <id>] [--dry-run]
   ${c.saffron('status')}  [--owner <addr> --topic <t>]    live paid-until + latest feed index
@@ -64,7 +64,7 @@ async function cmdStamps(bee: Bee): Promise<void> {
   heading('Postage batches — prepaid rent, with an end date')
   const batches = await listBatches(bee)
   if (batches.length === 0) {
-    console.log('  No batches yet. ' + c.dim('Try: npm run archive -- quote --size 100mb --days 14'))
+    console.log('  No batches yet. ' + c.dim('Try: npm run archive -- quote --size 100mb --days 7'))
     return
   }
   for (const b of batches) {
@@ -216,7 +216,7 @@ async function main(): Promise<void> {
       bee: { type: 'string' },
       batch: { type: 'string' },
       size: { type: 'string', default: '100mb' },
-      days: { type: 'string', default: '14' },
+      days: { type: 'string', default: '7' },
       dir: { type: 'string' },
       owner: { type: 'string' },
       topic: { type: 'string' },

@@ -106,7 +106,7 @@ export async function publish(opts: PublishOptions): Promise<PublishResult> {
     }
   }
   if (!batchId && !dryRun) {
-    throw new Error('No usable postage batch with enough room. Buy one first: npm run archive -- buy --size 100mb --days 14')
+    throw new Error('No usable postage batch with enough room. Buy one first: npm run archive -- buy --size 100mb --days 7')
   }
   emit({
     step: 'stamp',
