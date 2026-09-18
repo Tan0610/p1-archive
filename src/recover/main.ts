@@ -62,10 +62,8 @@ export async function runRecoverCli(argv: string[]): Promise<number> {
     onEvent: (m) => console.log('   ' + m),
   })
 
-  if (report.status === 'empty-feed') {
-    console.log('\n   The feed has no updates yet — nothing has been published there.')
-    return 2
-  }
+  // Empty feed: the recovery log above already explained it; exit 2 so scripts can tell it apart.
+  if (report.status === 'empty-feed') return 2
   if (report.editions.length) {
     console.log('\n   editions: ' + report.editions.map((e) => `#${e.index}${e.retrievable ? '' : ' (gone)'}`).join('  '))
   }
