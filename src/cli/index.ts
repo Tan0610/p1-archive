@@ -25,7 +25,7 @@ ${c.bold('archive')} — keep Tsering's folios reachable after the app is gone
                                                 upload a new edition, then point the feed at it
   ${c.saffron('status')}  [--owner <addr> --topic <t>] [--batch <id>]
                                                 live paid-until + newest feed index
-  ${c.saffron('verify')}  [--gateway]                           can the address be read back (your node / public gateway)?
+  ${c.saffron('verify')}  [--gateway]                           can catalogue.json be read back (your node / public gateway)?
   ${c.saffron('recover')} <owner> <topic> [--bee URL] [--out DIR] [--all-editions]
   ${c.saffron('recover')} --manifest <ref> [--bee URL] [--out DIR]
   ${c.saffron('serve')}   [--port 4173]                         the local web UI's API
@@ -151,7 +151,8 @@ async function cmdPublish(bee: Bee, dir: string | undefined, batch: string | und
   console.log()
   if (result.archiveAddress) {
     plate('ARCHIVE ADDRESS — never changes, hand this out', result.archiveAddress)
-    kv('open', `${config.gatewayUrl}/bzz/${result.archiveAddress}/`)
+    kv('gallery', `${trimSlash(bee.url)}/bzz/${result.archiveAddress}/  ${c.dim('(HTML: open through your Bee node)')}`)
+    kv('data', `${config.gatewayUrl}/bzz/${result.archiveAddress}/catalogue.json  ${c.dim('(any gateway)')}`)
   }
   kv('feed owner', result.owner)
   kv('feed topic', `${result.topic}  ${c.dim(`("${result.topicString}")`)}`)
