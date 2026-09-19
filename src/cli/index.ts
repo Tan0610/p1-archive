@@ -159,7 +159,9 @@ async function cmdPublish(bee: Bee, dir: string | undefined, batch: string | und
   if (result.feedIndex) kv(dryRun ? 'next feed index' : 'feed index', result.feedIndex)
   printTerm(result.term)
   if (dryRun) {
-    console.log('\n  ' + c.dim(`Staged ${result.fileCount} files in ${path.relative(process.cwd(), result.stagingDir)} — have a look at index.html.`))
+    console.log(
+      '\n  ' + c.dim(`Staged ${result.fileCount} files in ${path.relative(process.cwd(), result.stagingDir)}. See its gallery with: npm run preview:edition`),
+    )
   }
 }
 
