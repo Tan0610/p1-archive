@@ -61,7 +61,7 @@ export function App() {
         asOf: '',
         level: 'unknown' as const,
         source: 'none' as const,
-        unknownReason: 'the local server is not answering',
+        unknownReason: statusError ? 'the local server is not answering' : 'still asking your node',
       }
 
   return (
