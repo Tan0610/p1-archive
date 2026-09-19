@@ -55,17 +55,27 @@ ${'='.repeat(c.title.length)}
 
 ${c.description}
 
-${c.folios.length} folios. Every file's SHA-256 is listed in catalogue.json.
+${c.folios.length} files in folios/. Every file's size and SHA-256 is listed in catalogue.json.
 
 HOW TO FIND THE NEWEST EDITION
   This folder is one edition. The archive's permanent address is a feed:
     feed owner : ${c.feed.owner}
     feed topic : ${c.feed.topic}   ("${c.feed.topicString}")
     manifest   : ${c.feed.feedManifest}
-  Open  https://<any-swarm-gateway>/bzz/${c.feed.feedManifest}/  for the latest edition,
-  or open recover.html in this folder and paste the owner and topic.
+  Open  https://<any-swarm-gateway>/bzz/<manifest>/  for the latest edition
+  (e.g. https://api.gateway.ethswarm.org), or open recover.html in this folder
+  and paste the owner and topic, or the manifest.
+
+BY HAND, IF EVERY TOOL IS GONE
+  topic       = the 32 bytes above (keccak256 of the topic text)
+  update i    = chunk keccak256( keccak256(topic ‖ uint64_big_endian(i)) ‖ owner )
+                GET /chunks/<that>; probe i = 0, 1, 2 … until one is missing
+  its payload = after 105 header bytes: 8-byte timestamp, then the 32-byte
+                reference of that edition
+  then        GET /bzz/<reference>/catalogue.json and every path it lists
 
 HOW LONG IT IS PAID FOR (snapshot when this edition was published)
   ${honestSentence(term)}
+  This is an estimate. Ask any Bee node for today's figure: GET /stamps/${c.storage.batchId} → batchTTL.
 `
 }

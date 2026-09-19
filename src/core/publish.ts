@@ -155,7 +155,7 @@ export async function publish(opts: PublishOptions): Promise<PublishResult> {
   emit({
     step: 'stage',
     status: 'done',
-    message: `${entries.length} files staged (${folios.length} folios + index.html, catalogue.json, recover.html, ABOUT.txt).`,
+    message: `${entries.length} files staged (${folios.length} in folios/ + index.html, catalogue.json, recover.html, ABOUT.txt).`,
     data: { files: entries.map((e) => e.path) },
   })
 
