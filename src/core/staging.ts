@@ -76,6 +76,7 @@ BY HAND, IF EVERY TOOL IS GONE
 
 HOW LONG IT IS PAID FOR (snapshot when this edition was published)
   ${honestSentence(term)}
-  This is an estimate. Ask any Bee node for today's figure: GET /stamps/${c.storage.batchId} → batchTTL.
+  This is an estimate. For today's figure ask any Bee node or gateway:
+  GET /batches, find batchID ${c.storage.batchId}, read its batchTTL (seconds).
 `
 }

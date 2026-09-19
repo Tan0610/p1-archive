@@ -53,6 +53,7 @@
   .rent::before { content: ""; position: absolute; left: 18px; top: 18px; width: 22px; height: 22px; border-radius: 50%; background: var(--orpiment); box-shadow: 0 0 0 4px rgba(226, 169, 59, .25) }
   .rent.late::before { background: var(--cinnabar); box-shadow: 0 0 0 4px rgba(184, 50, 42, .2) }
   .rent strong { font-weight: 700 }
+  .rent .live { margin: 8px 0 0; font-style: italic }
   main { min-width: 0 }
   .toolbar { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin: 8px 0 26px }
   button {
@@ -120,6 +121,7 @@
     <div class="toolbar">
       <button type="button" id="check-all" disabled>Check every folio</button>
       <a href="catalogue.json">catalogue.json</a>
+      <a href="ABOUT.txt">ABOUT.txt</a>
       <a href="recover.html">Recover with only an address</a>
       <span class="tally" id="tally" aria-live="polite"></span>
     </div>
@@ -180,6 +182,30 @@
     })
   }
 
+  // Served from a gateway's /bzz/? Ask that same gateway for the batch's live TTL (GET /batches → batchTTL).
+  function liveTerm(batchId, rent) {
+    if (!/^[0-9a-f]{64}$/i.test(batchId || '') || location.protocol === 'file:') return
+    var line = el('p', { class: 'live', text: 'Asking this gateway for today’s figure…' })
+    rent.appendChild(line)
+    fetch('/batches').then(function (r) {
+      if (!r.ok) throw new Error(r.status)
+      return r.json()
+    }).then(function (body) {
+      var list = Array.isArray(body) ? body : body.batches || []
+      var b = list.filter(function (x) { return String(x.batchID).toLowerCase() === batchId.toLowerCase() })[0]
+      if (!b) {
+        line.textContent = 'Today this gateway does not list the batch at all. It has probably run out, and these files may already be going.'
+        rent.classList.add('late')
+        return
+      }
+      var days = Math.floor(Number(b.batchTTL) / 86400)
+      line.textContent = 'Today, by this gateway’s own estimate at the current storage price: about ' + days + ' day' + (days === 1 ? '' : 's') +
+        ' left, so paid until about ' + date(new Date(Date.now() + Number(b.batchTTL) * 1000).toISOString()) + '.'
+    }).catch(function () {
+      line.textContent = 'For today’s figure, ask any Bee node or gateway: GET /batches, find this batch ID, read its batchTTL (seconds).'
+    })
+  }
+
   function tally() {
     var ok = 0
     results.forEach(function (v) { if (v) ok++ })
@@ -204,12 +230,14 @@
       rent.appendChild(el('p', { style: 'margin:0' }, [
         document.createTextNode(late ? 'The storage for this edition was paid until about ' : 'Storage for this edition is paid until about '),
         el('strong', { text: date(s.paidUntil) }),
-        document.createTextNode(' — that was the node’s estimate on ' + date(s.asOf) + '. After that, nodes may drop these files unless someone tops up the postage batch. Ask any Bee node for the live figure: '),
-        el('code', { class: 'hash', text: 'GET /stamps/' + s.batchId }),
+        document.createTextNode(' — that was the node’s estimate on ' + date(s.asOf) + '. After that, nodes may drop these files, and the feed updates that lead here, unless someone tops up postage batch '),
+        el('code', { class: 'hash', text: s.batchId }),
+        document.createTextNode('.'),
       ]))
     } else {
-      rent.textContent = 'How long this edition is paid for was unknown when it was published. Ask any Bee node: GET /stamps/<batch id>.'
+      rent.textContent = 'How long this edition is paid for was unknown when it was published.'
     }
+    liveTerm(s.batchId, rent)
 
     var f = cat.feed || {}
     var dl = $('feed')

@@ -145,7 +145,7 @@ export async function publish(opts: PublishOptions): Promise<PublishResult> {
       ttlSeconds: term.ttlSeconds,
       paidUntil: term.paidUntil,
       asOf: term.asOf,
-      note: 'Snapshot at publish time. Ask any Bee node for the live figure: GET /stamps/<batchId> → batchTTL.',
+      note: 'Snapshot at publish time. For the live figure ask any Bee node or gateway: GET /batches, find this batchID, read its batchTTL (seconds).',
     },
     folios,
   }
