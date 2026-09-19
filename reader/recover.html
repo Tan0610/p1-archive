@@ -568,7 +568,8 @@ function render(cat, feed, reference) {
   if (cat.feed?.feedManifest) add('Archive address', cat.feed.feedManifest)
   add('Published', fmt(cat.publishedAt))
   const s = cat.storage || {}
-  add('Paid until', s.paidUntil ? `about ${fmt(s.paidUntil)} (node estimate on ${fmt(s.asOf)} — ask a node for today's figure)` : 'unknown at publish time')
+  add('Paid until', (s.paidUntil ? `about ${fmt(s.paidUntil)}, the node's estimate on ${fmt(s.asOf)}. ` : 'unknown at publish time. ') +
+    `After that nodes may drop these files and the feed updates that lead to them. Today's figure: GET /batches on any node or gateway, batch ${s.batchId || '?'} → batchTTL.`)
 
   const list = $('files')
   list.replaceChildren()
