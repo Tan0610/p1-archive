@@ -3,7 +3,7 @@
 These are **stand-in drawings**, not photographs of real manuscripts. `npm run make:samples`
 generates them deterministically (same bytes, same SHA-256, on every machine):
 
-- eight pothi-format leaves in SVG — birch bark with its lenticels, palm leaf with its ribs,
+- nine pothi-format leaves in SVG — birch bark with its lenticels, palm leaf with its ribs,
   binding holes, abstract pen strokes in place of script, a herb, a wheel diagram, a table of
   coloured dots, water stains, and marginal notes in three inks;
 - one plain-text catalogue note per leaf in `notes/`;

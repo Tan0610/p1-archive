@@ -31,7 +31,7 @@ describe('collection entries', () => {
 describe('catalogue', () => {
   it('lists every sample folio with its real SHA-256', async () => {
     const folios = await scanFolios(SAMPLES)
-    expect(folios.length).toBe(16)
+    expect(folios.length).toBe(18)
     const first = folios.find((f) => f.path === 'folios/f001-medical-compendium-12r.svg')!
     const bytes = readFileSync(path.join(SAMPLES, 'f001-medical-compendium-12r.svg'))
     expect(first.sha256).toBe(createHash('sha256').update(bytes).digest('hex'))

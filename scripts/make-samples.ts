@@ -41,6 +41,8 @@ interface Leaf {
   drawing?: 'plant' | 'wheel' | 'table'
   stain?: boolean
   text: string
+  /** A later correction to the catalogue note, kept visibly separate from the original text. */
+  correction?: string
 }
 
 function scriptLine(r: () => number, x0: number, x1: number, y: number, ink: string): string {
@@ -216,6 +218,8 @@ const LEAVES: Leaf[] = [
     lines: 5,
     drawing: 'table',
     text: 'Palm leaf with a four-by-four table of coloured dots. Probably a calendar of auspicious days; needs a specialist.',
+    correction:
+      'Corrected in edition 2: the dots are not scattered at random. Each column keeps one ink (red, blue, green, saffron), so the table is read column by column.',
   },
   {
     file: 'f004-birch-scroll-fragment.svg',
@@ -267,6 +271,16 @@ const LEAVES: Leaf[] = [
     margin: [{ color: '#2b1d17', y: 200 }],
     text: 'Photographed before any conservation so there is a record of the leaf as it was found.',
   },
+  {
+    file: 'f009-palm-leaf-hymn-leaf-4.svg',
+    title: 'Palm-leaf hymn, leaf 4',
+    note: 'Palm leaf. Found later in the same bundle as leaf 3; added in edition 2.',
+    material: 'palm',
+    seed: 83,
+    lines: 6,
+    margin: [{ color: '#b8322a', y: 110 }],
+    text: 'Leaf 4 of the hymn whose leaf 3 is f006. It turned up later in the same bundle and was added to the archive in edition 2.',
+  },
 ]
 
 rmSync(out, { recursive: true, force: true })
@@ -279,7 +293,7 @@ for (const leaf of LEAVES) {
   const noteFile = `notes/${leaf.file.replace(/\.svg$/, '.txt')}`
   writeFileSync(
     path.join(out, ...noteFile.split('/')),
-    `${leaf.title}\n\n${leaf.text}\n\nCatalogue note written for this demo. The image is a stand-in drawing; the real scans are Tsering's.\n`,
+    `${leaf.title}\n\n${leaf.text}\n\n${leaf.correction ? `${leaf.correction}\n\n` : ''}Catalogue note written for this demo. The image is a stand-in drawing; the real scans are Tsering's.\n`,
     'utf8',
   )
   meta[noteFile] = { title: `Note — ${leaf.title}`, note: 'Catalogue note' }

@@ -62,5 +62,13 @@
   "notes/f008-damaged-leaf.txt": {
     "title": "Note — Damaged leaf, bundle 7",
     "note": "Catalogue note"
+  },
+  "f009-palm-leaf-hymn-leaf-4.svg": {
+    "title": "Palm-leaf hymn, leaf 4",
+    "note": "Palm leaf. Found later in the same bundle as leaf 3; added in edition 2."
+  },
+  "notes/f009-palm-leaf-hymn-leaf-4.txt": {
+    "title": "Note — Palm-leaf hymn, leaf 4",
+    "note": "Catalogue note"
   }
 }

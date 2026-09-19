@@ -2,4 +2,6 @@ Palm-leaf astrological table
 
 Palm leaf with a four-by-four table of coloured dots. Probably a calendar of auspicious days; needs a specialist.
 
+Corrected in edition 2: the dots are not scattered at random. Each column keeps one ink (red, blue, green, saffron), so the table is read column by column.
+
 Catalogue note written for this demo. The image is a stand-in drawing; the real scans are Tsering's.
