@@ -134,10 +134,10 @@ Older editions stay retrievable by their snapshot reference while their postage 
 |---|---|
 | ![The gallery page of the live archive, served by a local Bee node](docs/screenshots/gallery-node.png) | ![reader/recover.html opened from disk against the public gateway, showing 18 of 18 files match](docs/screenshots/reader-verified.png) |
 | **The archive itself**, opened at `/bzz/f527dd8d…/` on a local Bee node. The gallery ships inside every edition and asks the node for today's TTL: "about 10 days left, so paid until about September 29, 2026" | **A stranger's recovery in the browser.** `reader/recover.html` opened from disk, owner + topic, public gateway: newest edition is update #1, **18 of 18 files match** |
-| ![The address screen: archive address with a QR code, feed owner and topic, and the lamp lit by the batch's live TTL](docs/screenshots/address.png) | ![The node screen: Bee 2.8.2 in light mode with wallet balances](docs/screenshots/node.png) |
+| ![The address screen: the archive address on an engraved plate with a QR code, feed owner and topic, and the lamp lit by the batch's live TTL](docs/screenshots/address.png) | ![The node screen: Bee 2.8.2 in light mode with wallet balances](docs/screenshots/node.png) |
 | **The address to hand out**, with a QR code, owner and topic, and the recover command. The lamp is lit only by the node's TTL | **Your node**: Bee 2.8.2 in light mode, read live. The margin note is the rule: the gift code lives in Swarm Desktop, never in the repo |
-| ![Publish screen: the folios on the desk before a rehearsal](docs/screenshots/publish.png) | ![Recover screen in the web UI](docs/screenshots/recover.png) |
-| **Publish**: the folios on the desk, then a dry run before anything is paid for (captured before the first batch was bought, so the lamp is unlit) | **Recover as a stranger** in the web UI: the one address, or owner + topic, and a gateway |
+| ![Publish screen: the folios on the desk before a rehearsal](docs/screenshots/publish.png) | ![Recover screen in the web UI after a real recovery from the public gateway: a row of cinnabar seals and 18 of 18 files intact](docs/screenshots/recover.png) |
+| **Publish**: the folios on the desk, then a dry run before anything is paid for (captured before the first batch was bought, so the lamp is unlit) | **Recover as a stranger** in the web UI: the one address and the public gateway. Each file gets a seal as its SHA-256 checks out: **18 of 18 intact** |
 
 <img src="docs/screenshots/stamps-phone.png" alt="Stamps screen at phone width: the lamp lit with paid until about 29 Sept 2026, and the node's batches each with a node-reported end date" width="240" align="right">
 
@@ -145,8 +145,9 @@ Older editions stay retrievable by their snapshot reference while their postage 
 read. The node in this screenshot holds two batches: `himalayan-archive` is this archive's
 (`bb1f753e…4c97`); `lsc-catalogue` belongs to another project on the same node.
 
-The screenshots of the gallery, the reader, the address, node and stamps screens were captured on
-19 Sept 2026 with read-only requests against the live node and gateway.
+The screenshots of the gallery, node and stamps screens were captured on 19 Sept 2026, and the
+reader, address and recover screens on 20 Sept 2026, all with read-only requests against the live
+node and public gateway.
 <br clear="right">
 
 ## Quick start
