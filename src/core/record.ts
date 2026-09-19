@@ -104,11 +104,18 @@ Tsering.
 ${rec.address.feedManifest}
 \`\`\`
 
-Open it in any Swarm gateway — a gallery with every folio, and a checksum for each:
+The data downloads from any Swarm gateway, the public one included: \`catalogue.json\` lists
+every folio with its SHA-256, and each folio sits at the path it names.
 
 \`\`\`
-${rec.address.bzzUrl}
+${rec.address.bzzUrl}catalogue.json
 \`\`\`
+
+Each edition also carries HTML pages: a gallery (\`index.html\`) and the reader (\`recover.html\`).
+They open from your own Bee node, e.g. Swarm Desktop at
+\`http://localhost:1633/bzz/${rec.address.feedManifest}/\`. The public gateway
+(api.gateway.ethswarm.org) does not serve HTML for hashes it has not approved; it redirects to
+an approval form instead.
 
 CID form: \`${rec.address.cid}\`
 
@@ -138,15 +145,17 @@ ${rec.feed.topic}
 ## Recover everything
 
 \`\`\`bash
-# 1. with this repo's CLI (reads only the identifiers you pass it)
+# 1. with this repo's CLI, the canonical route (reads only the identifiers you pass it)
 ${rec.recover.cli}
 
-# 2. with nothing but curl
+# 2. with nothing but curl (then fetch each path it lists)
 ${rec.recover.curl}
 \`\`\`
 
-3. Or open \`${rec.recover.reader}\` (a single HTML file, no install) and paste the address, or the owner and topic.
-   A copy travels inside every edition: ${rec.address.bzzUrl}recover.html
+3. Or open \`${rec.recover.reader}\` from this repository (a single HTML file, no install) straight
+   from disk or from any static host, and paste the address, or the owner and topic. It only
+   fetches data, so it works against the public gateway. The copy inside each edition
+   (\`recover.html\`) is HTML, so like the gallery it opens through your own Bee node.
 
 See \`docs/RECOVERY.md\` for the byte-level description, in case every tool in this repo is gone too.
 

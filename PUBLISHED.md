@@ -13,11 +13,18 @@ Tsering.
 f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28
 ```
 
-Open it in any Swarm gateway — a gallery with every folio, and a checksum for each:
+The data downloads from any Swarm gateway, the public one included: `catalogue.json` lists
+every folio with its SHA-256, and each folio sits at the path it names.
 
 ```
-https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/
+https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/catalogue.json
 ```
+
+Each edition also carries HTML pages: a gallery (`index.html`) and the reader (`recover.html`).
+They open from your own Bee node, e.g. Swarm Desktop at
+`http://localhost:1633/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/`. The public gateway
+(api.gateway.ethswarm.org) does not serve HTML for hashes it has not approved; it redirects to
+an approval form instead.
 
 CID form: `bah5qcgza6ut53dll4ygg7asct6x6juntp2fm2j32vijiisreos627opnjmua`
 
@@ -47,15 +54,17 @@ Topic:
 ## Recover everything
 
 ```bash
-# 1. with this repo's CLI (reads only the identifiers you pass it)
+# 1. with this repo's CLI, the canonical route (reads only the identifiers you pass it)
 npm run recover -- 0xD1f310B6E40a5a52Cde5Db122415b609EA0E6408 86cbe92d33d89dc878e0991ed53a92aa27905b4e21fee1a78c64683eab73f415 --bee https://api.gateway.ethswarm.org --out recovered
 
-# 2. with nothing but curl
+# 2. with nothing but curl (then fetch each path it lists)
 curl -s https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/catalogue.json
 ```
 
-3. Or open `reader/recover.html` (a single HTML file, no install) and paste the address, or the owner and topic.
-   A copy travels inside every edition: https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/recover.html
+3. Or open `reader/recover.html` from this repository (a single HTML file, no install) straight
+   from disk or from any static host, and paste the address, or the owner and topic. It only
+   fetches data, so it works against the public gateway. The copy inside each edition
+   (`recover.html`) is HTML, so like the gallery it opens through your own Bee node.
 
 See `docs/RECOVERY.md` for the byte-level description, in case every tool in this repo is gone too.
 
