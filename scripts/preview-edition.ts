@@ -25,7 +25,7 @@ createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x')
   const rel = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html'
   const file = path.resolve(dir, rel)
-  if (!file.startsWith(dir) || !existsSync(file) || !statSync(file).isFile()) {
+  if (!file.startsWith(dir + path.sep) || !existsSync(file) || !statSync(file).isFile()) {
     res.writeHead(404, { 'content-type': 'text/plain' })
     res.end('not found')
     return
