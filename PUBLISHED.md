@@ -82,9 +82,9 @@ Paid until about 26 Sept 2026 (≈ 7 days), the node's estimate at today's stora
 
 | | |
 |---|---|
-| Feed index | 0 |
-| Collection reference | `9caa421859e4cac9ab1ad481fb128fd45ad8000d9ecc2757ae6fb9a65c1a50da` |
-| Files | 20 |
-| Published | 2026-09-19T05:46:15.567Z |
+| Feed index | 1 |
+| Collection reference | `0fb29f8ac9c903abd05e64707ac5ae2b6763f7dda6046878be4f30ee658569a0` |
+| Files | 22 |
+| Published | 2026-09-19T06:31:55.388Z |
 
 The collection reference is a snapshot of *this* edition. Hand out the archive address above instead: it always points at the newest edition.
