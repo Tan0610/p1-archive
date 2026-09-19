@@ -86,7 +86,11 @@
     animation: stamp .45s cubic-bezier(.2, 1.6, .4, 1) both;
   }
   .seal.bad { background: var(--soot) }
+  .seal.reading { background: transparent; color: var(--cinnabar); box-shadow: none; border: 2px dashed var(--cinnabar); animation: inking 1.4s linear infinite }
   @keyframes stamp { from { transform: rotate(-30deg) scale(2.2); opacity: 0 } to { transform: rotate(-14deg) scale(1); opacity: .93 } }
+  @keyframes inking { from { transform: rotate(-14deg) } to { transform: rotate(346deg) } }
+  .flags { grid-column: 1 / -1; display: block; width: 100%; height: 56px; margin: -28px 0 -8px }
+  .leaf img { aspect-ratio: 4 / 1; background: var(--bark-deep); border-radius: 2px }
   aside { font-size: 1rem }
   aside .sticky { position: sticky; top: 24px; display: grid; gap: 22px }
   aside h3 { font: 400 1.2rem/1.2 var(--display); margin: 0 0 4px }
@@ -108,6 +112,16 @@
 </head>
 <body>
 <div class="wrap">
+  <svg class="flags" viewBox="0 0 600 56" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 8 Q300 30 600 6" fill="none" stroke="#7a3b27" stroke-width="2"/>
+    <g stroke="#2b1d17" stroke-width="1.2">
+      <path d="M70 13 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#2b4c9b"/>
+      <path d="M180 17 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#fbf3ea"/>
+      <path d="M290 18 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#b8322a"/>
+      <path d="M400 16 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#3f7f5e"/>
+      <path d="M510 11 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#e2a93b"/>
+    </g>
+  </svg>
   <header>
     <div>
       <h1 id="title"><span class="mark" aria-hidden="true">༄༅།</span><span id="title-text">Folios on Swarm</span></h1>
@@ -162,6 +176,9 @@
   function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, '0') }).join('') }
 
   function check(folio, node) {
+    var pending = node.querySelector('.seal')
+    if (pending) pending.remove()
+    node.appendChild(el('div', { class: 'seal reading', text: 'reading…' }))
     return fetch(folio.path).then(function (r) {
       if (!r.ok) throw new Error(r.status)
       return r.arrayBuffer()
@@ -177,6 +194,8 @@
       tally()
     }).catch(function (e) {
       results.set(folio.path, false)
+      var old = node.querySelector('.seal')
+      if (old) old.remove()
       node.appendChild(el('div', { class: 'seal bad', text: 'could not fetch', role: 'status', title: String(e.message || e) }))
       tally()
     })
@@ -286,8 +305,10 @@
     all.addEventListener('click', function () {
       all.disabled = true
       var items = list.children
-      cat.folios.reduce(function (p, folio, i) { return p.then(function () { return check(folio, items[i]) }) }, Promise.resolve())
-        .then(function () { all.disabled = false })
+      cat.folios.reduce(function (p, folio, i) {
+        return p.then(function () { all.textContent = 'Checking ' + (i + 1) + ' of ' + cat.folios.length + '…'; return check(folio, items[i]) })
+      }, Promise.resolve())
+        .then(function () { all.disabled = false; all.textContent = 'Check every folio again' })
     })
   }).catch(function (e) {
     $('lede').textContent = ''
