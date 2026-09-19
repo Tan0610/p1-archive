@@ -16,18 +16,21 @@ import { bar, c, fail, heading, kv, plate } from './ui.js'
 const HELP = `
 ${c.bold('archive')} — keep Tsering's folios reachable after the app is gone
 
-  ${c.saffron('doctor')}                         is the node up, light, funded?
-  ${c.saffron('stamps')}                         list postage batches and how long each is paid for
-  ${c.saffron('quote')}   --size 100mb --days 7 what a new batch would cost (no spending)
-  ${c.saffron('buy')}     --size 100mb --days 7 --yes     buy a batch (spends xBZZ)
-  ${c.saffron('extend')}  --batch <id> --days 7 --yes     top up an existing batch (spends xBZZ)
+  ${c.saffron('doctor')}                                        is the node up, light, funded?
+  ${c.saffron('stamps')}                                        list postage batches and how long each is paid for
+  ${c.saffron('quote')}   --size 100mb --days 7                 what a new batch would cost (nothing spent)
+  ${c.saffron('buy')}     --size 100mb --days 7 --yes           buy a batch (spends xBZZ)
+  ${c.saffron('extend')}  --batch <id> --days 7 --yes           top up an existing batch (spends xBZZ)
   ${c.saffron('publish')} [--dir samples/folios] [--batch <id>] [--dry-run]
-  ${c.saffron('status')}  [--owner <addr> --topic <t>]    live paid-until + latest feed index
-  ${c.saffron('verify')}  [--gateway]                    can the address be read back (locally / via the public gateway)?
+                                                upload a new edition, then point the feed at it
+  ${c.saffron('status')}  [--owner <addr> --topic <t>] [--batch <id>]
+                                                live paid-until + newest feed index
+  ${c.saffron('verify')}  [--gateway]                           can the address be read back (your node / public gateway)?
   ${c.saffron('recover')} <owner> <topic> [--bee URL] [--out DIR] [--all-editions]
   ${c.saffron('recover')} --manifest <ref> [--bee URL] [--out DIR]
-  ${c.saffron('serve')}   [--port 4173]                  the local web UI's API
+  ${c.saffron('serve')}   [--port 4173]                         the local web UI's API
 
+  Every command takes --bee URL (default: BEE_URL in .env, else http://localhost:1633).
   Recovery defaults to the public gateway ${PUBLIC_GATEWAY} and reads NOTHING from this repo.
 `
 
