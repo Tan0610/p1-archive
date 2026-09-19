@@ -22,8 +22,14 @@ Every figure is read from a Bee node at the moment you look. Nothing is a consta
 | Web UI lamp (top right) | flame height and date | same, refreshed every 30 s |
 | `archive.json` / `PUBLISHED.md` | snapshot at publish time, with its `asOf` date | same, recorded when writing |
 | `catalogue.json` inside each edition | snapshot at publish time | same |
+| The gallery inside each edition (`/bzz/<address>/`) | the snapshot, plus today's figure | the serving gateway's `GET /batches` → `batchTTL` |
 
 If the node cannot be reached, the tool says **unknown** instead of guessing.
+
+A stranger can check it without any of this code: `GET /batches` on any Bee node or gateway lists
+every postage batch on the network with its `batchTTL` in seconds; look up the batch ID from
+`archive.json` or `catalogue.json`. (`GET /stamps/<id>` only answers on the node that bought the
+batch.)
 
 The TTL is an **estimate**: the node divides the remaining balance by today's price. If the
 storage price rises, the date moves closer; if it falls, further away. That is why every
