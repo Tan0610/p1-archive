@@ -61,18 +61,22 @@
   .status.bad { color: var(--cinnabar) }
   .found { margin-top: 28px }
   .found h2 { font: 400 1.9rem/1.1 var(--display); margin: 0 0 6px }
-  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 12px 0 20px; font-size: .98rem }
+  .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 12px 0 20px; font-size: .98rem }
   .facts dt { color: var(--soot-soft) }
-  .facts dd { margin: 0; font: .85rem/1.5 var(--mono); word-break: break-all }
+  .facts dd { margin: 0; max-width: 62ch; overflow-wrap: anywhere }
+  .facts dd.mono { font: .85rem/1.5 var(--mono); word-break: break-all; max-width: none }
+  .flags { display: block; width: 100%; height: 56px; margin: -20px 0 18px }
   ul.files { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px }
   ul.files li {
     position: relative; display: grid; grid-template-columns: 180px 1fr auto; gap: 16px; align-items: center; padding: 12px;
     background: var(--paper); transform: rotate(var(--tilt, 0deg)); border-left: 3px solid var(--orpiment)
   }
   ul.files li.text { border-left-color: var(--malachite) }
-  ul.files img { width: 180px; height: auto; display: block }
+  ul.files li.reading { border-left-color: var(--cinnabar) }
+  ul.files img { width: 180px; height: auto; aspect-ratio: 4 / 1; display: block; background: #e6bea3; border-radius: 2px }
   ul.files .thumbless { width: 180px; font-family: var(--hand); font-size: 1.2rem; color: var(--malachite) }
   ul.files strong { display: block; font-weight: 700 }
+  ul.files li > div > span { font-size: .95rem; color: var(--soot-soft) }
   .hash { font: .75rem/1.35 var(--mono); color: var(--soot-soft); word-break: break-all }
   .seal {
     width: 64px; height: 64px; border-radius: 46% 54% 50% 50%; display: grid; place-items: center; text-align: center; padding: 6px;
@@ -80,13 +84,19 @@
     box-shadow: inset 0 0 0 3px rgba(251, 233, 220, .5); animation: stamp .45s cubic-bezier(.2, 1.6, .4, 1) both
   }
   .seal.bad { background: var(--soot) }
-  .seal.wait { background: transparent; color: var(--soot-soft); box-shadow: inset 0 0 0 1.5px dashed var(--soot-soft); animation: none; border: 1.5px dashed var(--soot-soft) }
+  .seal.wait { background: transparent; color: var(--soot-soft); box-shadow: none; animation: none; border: 1.5px dashed var(--soot-soft) }
+  .seal.reading { background: transparent; color: var(--cinnabar); box-shadow: none; border: 2px dashed var(--cinnabar); animation: inking 1.4s linear infinite }
   @keyframes stamp { from { transform: rotate(-30deg) scale(2); opacity: 0 } to { transform: rotate(-12deg) scale(1); opacity: .95 } }
+  @keyframes inking { from { transform: rotate(-12deg) } to { transform: rotate(348deg) } }
+  .done-note { margin: 0 0 22px; padding: 14px 18px; background: var(--paper); border: 1.5px solid var(--soot); border-radius: 4px 16px 5px 20px / 16px 4px 20px 5px; max-width: 62ch }
+  .done-note.bad { border-color: var(--cinnabar) }
+  .done-note strong { font: 400 1.3rem/1.2 var(--display); display: block; margin-bottom: 2px }
   .how { margin-top: 48px; max-width: 66ch }
   .how h2 { font: 400 1.5rem/1.2 var(--display) }
   .how code { font: .9rem var(--mono); background: var(--paper); padding: 1px 4px }
   @media (max-width: 700px) {
-    .fields { grid-template-columns: 1fr }
+    .fields, .facts { grid-template-columns: minmax(0, 1fr) }
+    .facts dd { margin-bottom: 6px }
     ul.files li { grid-template-columns: 1fr; }
     ul.files img, ul.files .thumbless { width: 100% }
     form .note { position: static; display: block; margin-bottom: 8px }
@@ -96,6 +106,16 @@
 </head>
 <body>
 <div class="wrap">
+  <svg class="flags" viewBox="0 0 600 56" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 8 Q300 30 600 6" fill="none" stroke="#7a3b27" stroke-width="2"/>
+    <g stroke="#2b1d17" stroke-width="1.2">
+      <path d="M70 13 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#2b4c9b"/>
+      <path d="M180 17 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#fbf3ea"/>
+      <path d="M290 18 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#b8322a"/>
+      <path d="M400 16 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#3f7f5e"/>
+      <path d="M510 11 h48 l-2 28 l-5 -3 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-4 -3 Z" fill="#e2a93b"/>
+    </g>
+  </svg>
   <h1>Get the archive back</h1>
   <p class="lede">Paste what was published — the feed owner and topic, or the archive address — and this page finds the newest edition on Swarm and downloads every file, checking each one against its SHA-256. It is a single file with no install. Save it anywhere; it keeps working as long as some Swarm gateway does.</p>
 
@@ -133,6 +153,7 @@
       <button type="button" class="quiet" id="save-zip" disabled>Save everything as .zip</button>
       <span class="hand" id="tally" style="color:var(--malachite)" aria-live="polite"></span>
     </div>
+    <p class="done-note" id="done-note" hidden></p>
     <ul class="files" id="files"></ul>
   </section>
 
@@ -238,10 +259,10 @@ function render(cat, feed, reference) {
   $('found-desc').textContent = cat.description
   const facts = $('facts')
   facts.replaceChildren()
-  const add = (k, v) => { facts.append(el('dt', { text: k }), el('dd', { text: v })) }
+  const add = (k, v, mono = false) => { facts.append(el('dt', { text: k }), el('dd', { text: v, className: mono ? 'mono' : '' })) }
   if (feed) add('Feed update', '#' + feed.index)
-  add('Edition reference', reference)
-  if (cat.feed?.feedManifest) add('Archive address', cat.feed.feedManifest)
+  add('Edition reference', reference, true)
+  if (cat.feed?.feedManifest) add('Archive address', cat.feed.feedManifest, true)
   add('Published', fmt(cat.publishedAt))
   const s = cat.storage || {}
   add('Paid until', (s.paidUntil ? `about ${fmt(s.paidUntil)}, the node's estimate on ${fmt(s.asOf)}. ` : 'unknown at publish time. ') +
@@ -262,17 +283,25 @@ function render(cat, feed, reference) {
     list.append(li)
   })
   $('tally').textContent = ''
+  $('done-note').hidden = true
   $('save-zip').disabled = true
 }
 
 async function verifyAll() {
   if (!current) return
-  $('verify-all').disabled = true
+  const button = $('verify-all')
+  const total = current.catalogue.folios.length
+  button.disabled = true
+  $('done-note').hidden = true
   const items = [...$('files').children]
   let ok = 0
   for (const [i, f] of current.catalogue.folios.entries()) {
     const li = items[i]
     const seal = li.querySelector('.seal')
+    button.textContent = `Checking ${i + 1} of ${total}…`
+    seal.className = 'seal reading'
+    seal.textContent = 'reading…'
+    li.classList.add('reading')
     try {
       const bytes = await fetchBzz(current.gateway, current.reference, f.path)
       const sum = await sha256Hex(bytes)
@@ -282,15 +311,27 @@ async function verifyAll() {
       seal.textContent = good ? 'matches' : 'does not match'
       if (good) ok++
       const a = el('a', { href: URL.createObjectURL(new Blob([bytes], { type: f.mime })), download: f.path.split('/').pop(), text: 'save' })
+      li.children[1].querySelector('a[download]')?.remove()
       li.children[1].append(' ', a)
     } catch (e) {
       seal.className = 'seal bad'
       seal.textContent = 'missing'
       seal.title = String(e.message || e)
     }
-    $('tally').textContent = `${ok} of ${current.catalogue.folios.length} files match`
+    li.classList.remove('reading')
+    $('tally').textContent = `${ok} of ${total} files match`
   }
-  $('verify-all').disabled = false
+  const note = $('done-note')
+  note.replaceChildren(
+    el('strong', { text: ok === total ? 'Every file came back intact' : `${total - ok} of ${total} files did not come back intact` }),
+    ok === total
+      ? `All ${total} files match the SHA-256 in the edition's catalogue. Save them one by one, or all together as a .zip.`
+      : 'The seals below show which ones. A missing file may not have reached this gateway yet: try again in a few minutes, or another gateway.',
+  )
+  note.className = ok === total ? 'done-note' : 'done-note bad'
+  note.hidden = false
+  button.textContent = 'Check every file again'
+  button.disabled = false
   $('save-zip').disabled = verified.size === 0
 }
 
