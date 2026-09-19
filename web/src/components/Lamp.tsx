@@ -5,15 +5,18 @@ import { formatDate, formatTime, shownDays } from '../format'
  * A butter lamp whose flame is the paid storage left. It is only ever lit by a
  * number the Bee node gave us; when we don't know, the lamp is unlit and says so.
  */
-export function Lamp({ term, batchLabel }: { term: StorageTerm | null; batchLabel?: string }) {
+export function Lamp({ term, batchLabel, loading = false }: { term: StorageTerm | null; batchLabel?: string; loading?: boolean }) {
   const known = term && term.level !== 'unknown' && term.daysLeft !== null && term.paidUntil
   const days = known ? (shownDays(term) ?? 0) : 0
   const flame = known ? Math.max(0.2, Math.min(1, days / 60)) : 0
-  const level = term?.level ?? 'unknown'
+  const level = loading ? 'loading' : (term?.level ?? 'unknown')
 
   let headline: string
   let detail: string
-  if (!term) {
+  if (loading) {
+    headline = 'Asking your node…'
+    detail = 'The lamp lights once the node says how long the storage is paid for.'
+  } else if (!term) {
     headline = 'Not paid for yet'
     detail = 'Buy a postage batch to start the clock.'
   } else if (!known) {

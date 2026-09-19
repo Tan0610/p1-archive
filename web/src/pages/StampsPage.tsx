@@ -20,7 +20,11 @@ export function StampsPage({ status, onChanged }: { status: Status | null; onCha
           {batches.length === 0 ? (
             <div className="box dashed">
               <p style={{ margin: 0 }}>
-                {status?.node.reachable ? 'No batches yet. Buy one below to start the clock.' : 'Your node isn’t answering, so we can’t list batches.'}
+                {!status
+                  ? 'Asking your node for its batches…'
+                  : status.node.reachable
+                    ? 'No batches yet. Buy one below to start the clock.'
+                    : 'Your node isn’t answering, so we can’t list batches.'}
               </p>
             </div>
           ) : (

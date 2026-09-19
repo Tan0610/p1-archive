@@ -83,7 +83,7 @@ export function App() {
       <div className="page">
         <div className="top">
           <PrayerFlags done={flags.done} failed={flags.failed} />
-          <Lamp term={term} batchLabel={bestBatch?.label} />
+          <Lamp term={term} batchLabel={bestBatch?.label} loading={!status && !statusError} />
         </div>
 
         {statusError && (

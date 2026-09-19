@@ -38,11 +38,15 @@ export function Hex({ value }: { value: string }) {
   )
 }
 
-export function Seal({ state }: { state: 'wait' | 'ok' | 'bad' | 'missing' }) {
-  const text = state === 'ok' ? 'matches' : state === 'bad' ? 'does not match' : state === 'missing' ? 'missing' : 'not checked'
+export type SealState = 'wait' | 'reading' | 'ok' | 'bad' | 'missing'
+
+const SEAL_TEXT: Record<SealState, string> = { ok: 'matches', bad: 'does not match', missing: 'missing', reading: 'reading…', wait: 'not checked' }
+
+export function Seal({ state }: { state: SealState }) {
+  const cls = state === 'ok' ? '' : state === 'wait' || state === 'reading' ? state : 'bad'
   return (
-    <div className={`seal ${state === 'ok' ? '' : state === 'wait' ? 'wait' : 'bad'}`} role="status">
-      {text}
+    <div className={`seal ${cls}`} role="status">
+      {SEAL_TEXT[state]}
     </div>
   )
 }

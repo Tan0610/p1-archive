@@ -181,6 +181,17 @@ p {
 .tag:hover {
   animation: swing 0.9s ease-in-out;
 }
+/* the tag's clip-path would cut a normal outline off, so focus inks the tag orpiment instead */
+.tag:focus-visible,
+.tag[aria-current='page']:focus-visible {
+  outline: none;
+  background: var(--orpiment);
+  color: var(--soot);
+}
+.tag:focus-visible small,
+.tag[aria-current='page']:focus-visible small {
+  color: var(--soot);
+}
 .tag[aria-current='page'] {
   background: var(--soot);
   color: var(--bark);
@@ -274,6 +285,10 @@ p {
 .lamp.urgent,
 .lamp.expired {
   border-color: var(--cinnabar);
+}
+.lamp.loading {
+  border-style: dashed;
+  color: var(--soot-soft);
 }
 .lamp .flame {
   transform-box: fill-box;
@@ -615,6 +630,10 @@ p {
   width: 100%;
   height: auto;
   filter: drop-shadow(0 5px 8px rgba(80, 40, 20, 0.16));
+  transition: filter 0.25s ease;
+}
+.folio:hover img {
+  filter: drop-shadow(0 12px 14px rgba(80, 40, 20, 0.24));
 }
 .folio .caption {
   display: flex;
@@ -684,14 +703,48 @@ p {
 }
 
 /* ---------- the address plate ---------- */
+/* an engraved plate: a double rule cut inside the edge, four rivets, a seal pressed on the corner */
 .plate {
   position: relative;
-  margin: 26px 0 10px;
-  padding: 26px 26px 22px;
-  background: var(--soot);
+  margin: 30px 0 10px;
+  padding: 34px 36px 30px;
+  background:
+    radial-gradient(circle at 9px 9px, #8a6a55 0 2.5px, transparent 3px), radial-gradient(circle at calc(100% - 9px) 9px, #8a6a55 0 2.5px, transparent 3px),
+    radial-gradient(circle at 9px calc(100% - 9px), #8a6a55 0 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #8a6a55 0 2.5px, transparent 3px), var(--soot);
   color: var(--bark);
   border-radius: 6px 22px 8px 26px / 22px 6px 26px 8px;
+  box-shadow: 0 6px 0 rgba(43, 29, 23, 0.14);
   transform: rotate(-0.6deg);
+}
+.plate::before {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 4px double rgba(226, 169, 59, 0.42);
+  border-radius: 4px 16px 6px 18px / 16px 4px 18px 6px;
+  pointer-events: none;
+}
+.plate::after {
+  content: '༄༅';
+  position: absolute;
+  right: -14px;
+  top: -18px;
+  width: 54px;
+  height: 54px;
+  border-radius: 46% 54% 50% 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cinnabar);
+  color: #fbe9dc;
+  font: 1.1rem/1 var(--tibetan);
+  box-shadow:
+    inset 0 0 0 3px rgba(251, 233, 220, 0.5),
+    0 2px 5px rgba(80, 20, 10, 0.35);
+  transform: rotate(14deg);
+}
+.plate :focus-visible {
+  outline-color: var(--orpiment);
 }
 .plate .label {
   font-family: var(--hand);
@@ -728,16 +781,39 @@ p {
 }
 .qr {
   width: 148px;
-  height: 148px;
-  background: var(--paper);
-  border-radius: 6px;
-  padding: 8px;
+  margin: 0;
+  position: relative;
 }
 .qr img {
-  width: 100%;
-  height: 100%;
+  width: 148px;
+  height: 148px;
   display: block;
+  padding: 8px;
+  background: var(--paper);
+  border-radius: 6px;
   image-rendering: pixelated;
+}
+.qr figcaption {
+  margin-top: 8px;
+  font: 1.1rem/1.15 var(--hand);
+  color: var(--orpiment);
+  text-align: center;
+}
+.qr figcaption a {
+  display: block;
+  margin-top: 2px;
+  font: 700 0.85rem/1.4 var(--body);
+  color: var(--bark);
+}
+.ledger dd.copyable {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.ledger dd.copyable .hash {
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 /* ---------- seals ---------- */
@@ -768,6 +844,13 @@ p {
   box-shadow: none;
   animation: none;
 }
+.seal.reading {
+  background: transparent;
+  color: var(--cinnabar);
+  border: 2px dashed var(--cinnabar);
+  box-shadow: none;
+  animation: inking 1.4s linear infinite;
+}
 @keyframes stamp {
   from {
     transform: rotate(-30deg) scale(2);
@@ -777,6 +860,91 @@ p {
     transform: rotate(-12deg) scale(1);
     opacity: 0.95;
   }
+}
+@keyframes inking {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(348deg);
+  }
+}
+
+/* one tiny seal per file, pressed in order as each one is checked */
+.stamp-row {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.stamp-row li {
+  width: 16px;
+  height: 16px;
+  border-radius: 46% 54% 50% 50%;
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+  transform: rotate(-12deg);
+}
+.stamp-row li.reading {
+  box-shadow: inset 0 0 0 2px var(--cinnabar);
+  animation: inking 1.4s linear infinite;
+}
+.stamp-row li.ok {
+  background: var(--cinnabar);
+  box-shadow: inset 0 0 0 2px rgba(251, 233, 220, 0.45);
+  animation: stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.stamp-row li.bad {
+  background: var(--soot);
+  box-shadow: none;
+}
+
+/* the colophon: what a scribe writes at the end of a copied text */
+.colophon {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin: 22px 0 6px;
+  padding: 18px 20px;
+  background: var(--paper);
+  border: 1.5px solid var(--soot);
+  border-radius: var(--wobbly);
+}
+.colophon h3 {
+  margin-bottom: 6px;
+}
+.colophon p {
+  margin: 0;
+  font-size: 1rem;
+}
+.big-seal {
+  width: 92px;
+  height: 92px;
+  border-radius: 46% 54% 50% 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: var(--cinnabar);
+  color: #fbe9dc;
+  transform: rotate(-10deg);
+  box-shadow:
+    inset 0 0 0 4px rgba(251, 233, 220, 0.5),
+    0 3px 8px rgba(80, 20, 10, 0.3);
+  animation: stamp 0.55s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.big-seal span {
+  font: 2rem/1 var(--display);
+}
+.big-seal small {
+  font: 700 0.75rem/1.1 var(--body);
+}
+.colophon.bad .big-seal {
+  background: var(--soot);
+}
+.colophon.bad {
+  border-color: var(--cinnabar);
 }
 
 /* ---------- recover ---------- */
@@ -816,10 +984,20 @@ p {
   background: var(--paper);
   padding: 10px 12px;
   transform: rotate(var(--tilt, 0deg));
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.recovered li.is-reading {
+  border-left-color: var(--cinnabar);
 }
 .recovered img {
   width: 150px;
+  height: auto;
+  aspect-ratio: 4 / 1;
   display: block;
+  /* a bark-coloured blank while the gateway sends the image */
+  background: var(--bark-deep);
+  border-radius: 2px;
 }
 .recovered .thumbless {
   font-family: var(--hand);
@@ -904,6 +1082,14 @@ p {
   .plate-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+  .plate {
+    padding: 30px 26px 26px;
+  }
+  .plate::after {
+    right: 2px;
+    width: 46px;
+    height: 46px;
+  }
   .recovered li {
     grid-template-columns: minmax(0, 1fr) 64px;
   }
@@ -912,6 +1098,22 @@ p {
   }
   .recovered img {
     width: 100%;
+  }
+  .colophon {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding: 16px;
+  }
+  .big-seal {
+    width: 64px;
+    height: 64px;
+  }
+  .big-seal span {
+    font-size: 1.45rem;
+  }
+  .big-seal small {
+    font-size: 0.65rem;
   }
 }
 

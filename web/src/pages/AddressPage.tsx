@@ -17,6 +17,17 @@ export function AddressPage({ status }: { status: Status | null }) {
       .catch(() => setQr(null))
   }, [url])
 
+  if (!status) {
+    return (
+      <div className="leaf-grid">
+        <div className="content">
+          <h1>The address to hand out</h1>
+          <p className="lede">Reading the published address from archive.json…</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!archive) {
     return (
       <div className="leaf-grid">
@@ -50,7 +61,7 @@ export function AddressPage({ status }: { status: Status | null }) {
         <div className="plate">
           <div className="plate-grid">
             <div>
-              <p className="label">the archive, forever at</p>
+              <p className="label">the archive’s address, the same for every edition</p>
               <p className="addr">
                 <Hex value={archive.address.feedManifest} />
               </p>
@@ -71,9 +82,15 @@ export function AddressPage({ status }: { status: Status | null }) {
               </div>
             </div>
             {qr && (
-              <div className="qr">
+              <figure className="qr">
                 <img src={qr} alt="QR code for the archive address" />
-              </div>
+                <figcaption>
+                  holds the address itself
+                  <a href={qr} download="archive-address-qr.png">
+                    Save the QR
+                  </a>
+                </figcaption>
+              </figure>
             )}
           </div>
         </div>
@@ -86,12 +103,12 @@ export function AddressPage({ status }: { status: Status | null }) {
           <div className="slip lapis">
             <dl className="ledger">
               <dt>Feed owner</dt>
-              <dd className="hash">
-                {archive.feed.owner} <CopyButton text={archive.feed.owner} />
+              <dd className="copyable">
+                <span className="hash">{archive.feed.owner}</span> <CopyButton text={archive.feed.owner} label="Copy owner" />
               </dd>
               <dt>Feed topic</dt>
-              <dd className="hash">
-                {archive.feed.topic} <CopyButton text={archive.feed.topic} />
+              <dd className="copyable">
+                <span className="hash">{archive.feed.topic}</span> <CopyButton text={archive.feed.topic} label="Copy topic" />
               </dd>
               <dt>Topic text</dt>
               <dd>{archive.feed.topicString}</dd>

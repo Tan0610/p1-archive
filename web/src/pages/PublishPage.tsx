@@ -143,11 +143,13 @@ export function PublishPage({ status, onFlags, onPublished }: { status: Status |
               </button>
               {!canPublish && (
                 <p className="muted" style={{ margin: '10px 0 0' }}>
-                  {!status?.node.reachable
-                    ? 'Your node isn’t answering.'
-                    : usable.length === 0
-                      ? 'You need a usable postage batch first.'
-                      : 'Your node isn’t ready to upload yet.'}
+                  {!status
+                    ? 'Asking your node whether it can upload…'
+                    : !status.node.reachable
+                      ? 'Your node isn’t answering.'
+                      : usable.length === 0
+                        ? 'You need a usable postage batch first.'
+                        : 'Your node isn’t ready to upload yet.'}
                 </p>
               )}
             </div>

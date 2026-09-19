@@ -12,12 +12,11 @@ import {
   sha256Hex,
   type LiteCatalogue,
 } from '../../../reader/swarm-lite.js'
-import { Note, Seal } from '../components/Bits'
+import { Note, Seal, type SealState } from '../components/Bits'
 import { formatBytes, formatDate, tilt } from '../format'
 import type { Status } from '../types'
 
 type Bead = 'probe' | 'yes' | 'no'
-type SealState = 'wait' | 'ok' | 'bad' | 'missing'
 
 /**
  * Recovery as a stranger would do it: this screen uses the same zero-dependency
@@ -36,6 +35,8 @@ export function RecoverPage({ status }: { status: Status | null }) {
   /** `index` is null when the gateway followed the feed for us (address mode). */
   const [found, setFound] = useState<{ reference: string; index: bigint | null; catalogue: LiteCatalogue } | null>(null)
   const [seals, setSeals] = useState<Record<string, SealState>>({})
+  /** The file being fetched and hashed right now, so its seal can show it is being read. */
+  const [checking, setChecking] = useState<string | null>(null)
 
   async function find(e: React.FormEvent) {
     e.preventDefault()
@@ -88,9 +89,11 @@ export function RecoverPage({ status }: { status: Status | null }) {
   }
 
   async function verifyAll() {
-    if (!found) return
+    if (!found || checking) return
     const gw = gateway.trim().replace(/\/+$/, '')
+    setSeals({})
     for (const f of found.catalogue.folios) {
+      setChecking(f.path)
       try {
         const bytes = await fetchBzz(gw, found.reference, f.path)
         const sum = await sha256Hex(bytes)
@@ -99,9 +102,13 @@ export function RecoverPage({ status }: { status: Status | null }) {
         setSeals((s) => ({ ...s, [f.path]: 'missing' }))
       }
     }
+    setChecking(null)
   }
 
   const ok = Object.values(seals).filter((s) => s === 'ok').length
+  const checked = Object.keys(seals).length
+  const total = found?.catalogue.folios.length ?? 0
+  const finished = !checking && total > 0 && checked === total
 
   return (
     <div className="leaf-grid">
@@ -148,7 +155,7 @@ export function RecoverPage({ status }: { status: Status | null }) {
             </label>
           </div>
           <div className="row" style={{ marginTop: 16 }}>
-            <button className="btn" type="submit" disabled={busy}>
+            <button className="btn" type="submit" disabled={busy || !!checking}>
               {busy ? 'Looking…' : 'Find the newest edition'}
             </button>
             {status?.archive && (
@@ -187,18 +194,42 @@ export function RecoverPage({ status }: { status: Status | null }) {
                 : 'How long it was paid for was not recorded.'}
             </p>
             <div className="row">
-              <button className="btn" onClick={() => void verifyAll()}>
-                Download and check every file
+              <button className="btn" onClick={() => void verifyAll()} disabled={!!checking}>
+                {checking ? `Checking ${checked + 1} of ${total}…` : checked > 0 ? 'Check every file again' : 'Download and check every file'}
               </button>
               <span className="hand lapis" aria-live="polite">
-                {Object.keys(seals).length > 0 ? `${ok} of ${found.catalogue.folios.length} match` : ''}
+                {checked > 0 ? `${ok} of ${total} match` : ''}
               </span>
             </div>
+            {(checked > 0 || checking) && (
+              <ol className="stamp-row" aria-hidden="true">
+                {found.catalogue.folios.map((f) => {
+                  const s = seals[f.path]
+                  return <li key={f.path} className={s === 'ok' ? 'ok' : s ? 'bad' : f.path === checking ? 'reading' : ''} />
+                })}
+              </ol>
+            )}
+            {finished && (
+              <div className={`colophon ${ok === total ? '' : 'bad'}`} role="status">
+                <div className="big-seal" aria-hidden="true">
+                  <span>{ok}</span>
+                  <small>of {total}</small>
+                </div>
+                <div>
+                  <h3>{ok === total ? 'Every file came back intact' : `${total - ok} file${total - ok === 1 ? '' : 's'} did not come back intact`}</h3>
+                  <p>
+                    {ok === total
+                      ? `All ${total} files were downloaded from ${gateway.replace(/^https?:\/\//, '').replace(/\/+$/, '')} and each one matches the SHA-256 in the edition’s catalogue. The local server was not asked for anything.`
+                      : 'The seals below show which ones. A file that is missing may not have reached this gateway yet; try again in a few minutes, or ask another gateway.'}
+                  </p>
+                </div>
+              </div>
+            )}
             <ul className="recovered">
               {found.catalogue.folios.map((f, i) => (
-                <li key={f.path} style={{ ['--tilt' as string]: tilt(i) }}>
+                <li key={f.path} style={{ ['--tilt' as string]: tilt(i) }} className={f.path === checking ? 'is-reading' : undefined}>
                   {f.kind === 'image' ? (
-                    <img src={bzzUrl(gateway, found.reference, f.path)} alt={f.title} loading="lazy" />
+                    <img src={bzzUrl(gateway, found.reference, f.path)} alt={f.title} loading="lazy" width={1200} height={300} />
                   ) : (
                     <span className="thumbless">a written note</span>
                   )}
@@ -209,7 +240,7 @@ export function RecoverPage({ status }: { status: Status | null }) {
                     </div>
                     <div className="hash">sha256 {f.sha256}</div>
                   </div>
-                  <Seal state={seals[f.path] ?? 'wait'} />
+                  <Seal state={seals[f.path] ?? (f.path === checking ? 'reading' : 'wait')} />
                 </li>
               ))}
             </ul>
