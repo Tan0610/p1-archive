@@ -1,0 +1,97 @@
+# Daily, keyless check that the archive is still paid for and still answers.
+# Reads only public data (gateway /batches, the PostageStamp contract, /bzz/<address>/catalogue.json,
+# feed update chunks). The batch id and archive address come from the tracked archive.json; no secrets.
+# When storage is running out (or the address stops answering) it opens, or updates, one GitHub issue
+# explaining how to top up, and closes that issue once the checks pass again.
+name: storage-watchdog
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      warn_days:
+        description: Warn (and open an issue) when this many days or fewer are paid for
+        required: false
+        default: '3'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: storage-watchdog
+  cancel-in-progress: false
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check storage time, archive address and feed
+        id: wd
+        env:
+          WARN_DAYS: ${{ inputs.warn_days || '3' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          BATCH=$(jq -r .storage.batchId archive.json)
+          ADDRESS=$(jq -r .address.feedManifest archive.json)
+          npm run --silent watchdog -- --batch "$BATCH" --address "$ADDRESS" --warn-days "$WARN_DAYS" \
+            --json watchdog.json --issue-body issue.md --run-url "$RUN_URL" | tee watchdog.txt
+          code=${PIPESTATUS[0]}
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          { echo '```'; cat watchdog.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Open or update the top-up issue
+        if: steps.wd.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -f watchdog.json ]; then
+            TITLE=$(jq -r .issueTitle watchdog.json)
+            NOTE="$(jq -r '.level | ascii_upcase' watchdog.json) at $(jq -r .checkedAt watchdog.json): $(jq -r '.checks[0].detail' watchdog.json)"
+          else
+            TITLE="Archive storage check crashed — see the run log"
+            printf 'The storage watchdog could not finish. Log: %s\n' "$RUN_URL" > issue.md
+            NOTE="Watchdog crashed: $RUN_URL"
+          fi
+          NUM=$(gh issue list --state open --limit 100 --json number,title \
+            --jq '[.[] | select(.title | startswith("Archive storage"))][0].number // empty')
+          if [ -n "$NUM" ]; then
+            gh issue edit "$NUM" --title "$TITLE" --body-file issue.md
+            gh issue comment "$NUM" --body "$NOTE ([run]($RUN_URL))"
+            echo "Updated issue #$NUM"
+          else
+            gh issue create --title "$TITLE" --body-file issue.md
+          fi
+
+      - name: Close the issue once the checks pass again
+        if: steps.wd.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NUM=$(gh issue list --state open --limit 100 --json number,title \
+            --jq '[.[] | select(.title | startswith("Archive storage"))][0].number // empty')
+          if [ -n "$NUM" ]; then
+            gh issue close "$NUM" --comment "All checks pass again: $(jq -r '.checks[0].detail' watchdog.json) Closing."
+          else
+            echo "No open watchdog issue."
+          fi
+
+      - name: Fail the run when it is critical
+        if: steps.wd.outputs.code == '2'
+        run: |
+          echo "::error::Archive storage is critical — see the issue and the summary above."
+          exit 1
