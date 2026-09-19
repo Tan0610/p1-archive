@@ -16,6 +16,8 @@
 > - Paid-until comes from the node's batch TTL (≈ 7 days at publish, about 26 Sept 2026), never a
 >   constant. A daily GitHub Actions watchdog reads it keylessly and opens a top-up issue when
 >   3 days or fewer are left.
+> - The batch was topped up with the CLI's `extend` on 19 Sept 2026 (+3 days for 0.2822 xBZZ), so
+>   it is now paid until about 29 Sept 2026.
 >
 > | Check | Where (file → function) |
 > |---|---|

@@ -134,10 +134,44 @@ On-chain facts the issue text relies on were read from Gnosis Chain on the same 
 0xdBF3Ea6F5beE45c02255B2c26a16F300502F68da` (symbol `BZZ`), `batchDepth(batch) = 19`, and
 `lastPrice() = 103283` PLUR per chunk per block, so 30 more days for this batch cost about 2.81 xBZZ.
 
+## Storage extended (19 Sept 2026)
+
+Batch `bb1f753edc43cbdc457984ceb2fb2b1b7995489f9dfdd07525b4d7ef243d4c97` (depth 19) was topped up
+by 3 days with the CLI, which calls `bee.storage.extendDuration`:
+
+```bash
+npm run archive -- extend --batch bb1f753edc43cbdc457984ceb2fb2b1b7995489f9dfdd07525b4d7ef243d4c97 --days 3        # quote: 0.2821 xBZZ
+npm run archive -- extend --batch bb1f753edc43cbdc457984ceb2fb2b1b7995489f9dfdd07525b4d7ef243d4c97 --days 3 --yes
+```
+
+| | Before (13:00 UTC) | After (13:01 UTC) |
+|---|---|---|
+| Batch `amount` (PLUR per chunk) | 12485612161 | 17867744642 |
+| Node `batchTTL` | 575581 s ≈ 6.7 days | 834681 s ≈ 9.7 days |
+| Paid until (node estimate) | ≈ 2026-09-26 04:53 UTC | ≈ 2026-09-29 04:53 UTC (10:23 IST) |
+| Node wallet | 0.3046 xBZZ | 0.0225 xBZZ |
+
+The cost was 5382132481 PLUR per chunk × 2^19 chunks = 0.28218 xBZZ, exactly the drop in the
+wallet. At the price of 103822 PLUR per chunk per block, that buys 3 days of 17280 blocks. Gas was
+about 8.2 × 10⁻¹² xDAI. The node showed the new TTL about 40 seconds after the transaction.
+`npm run archive -- status` now reads "Paid until about 29 Sept 2026 (≈ 10 days)". The watchdog
+agrees:
+
+```
+  TTL       834681 s ≈ 9.7 days, runs out ≈ 2026-09-29T04:53:21.548Z (from gateway)
+  [OK      ] storage time    9.7 days of storage left (runs out around 2026-09-29).
+  [OK      ] cross-check     gateway 834681 s vs contract 834640 s (agree within an hour)
+  Overall: OK (exit 0)
+```
+
+`archive.json` and `PUBLISHED.md` still show the TTL from publish time (≈ 7 days). They are
+snapshots taken at publish; the live figure always comes from the node or the gateway.
+
 ## Honest notes
 
-- Paid storage is short: about 7 days from 19 Sept 2026. The watchdog will open an issue once 3 or
-  fewer days are left; anyone can then top the batch up (see the README).
+- Paid storage is short: about 7 days from 19 Sept 2026 at publish, extended the same day to about
+  29 Sept 2026 (above). The watchdog will open an issue once 3 or fewer days are left; anyone can
+  then top the batch up (see the README).
 - The public gateway serves the data but not the HTML for unapproved hashes (above).
 - A new edition can take a few minutes to show through the public gateway (`verify --gateway`
   retries for up to 5 minutes). For edition 2 it was already visible when `verify --gateway` ran,
