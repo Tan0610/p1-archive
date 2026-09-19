@@ -1,5 +1,5 @@
 import type { StorageTerm } from '../types'
-import { formatDate } from '../format'
+import { formatDate, formatTime } from '../format'
 
 /**
  * A butter lamp whose flame is the paid storage left. It is only ever lit by a
@@ -21,10 +21,10 @@ export function Lamp({ term, batchLabel }: { term: StorageTerm | null; batchLabe
     detail = term.unknownReason ? `${capitalise(term.unknownReason)}.` : 'The node did not say, so we won’t guess.'
   } else if (level === 'expired') {
     headline = 'The oil has run out'
-    detail = 'This batch has expired. Nodes may already be dropping the folios.'
+    detail = 'This batch has expired. Nodes may already be dropping the folios, and the feed updates with them.'
   } else {
-    headline = `Paid until ${formatDate(term.paidUntil!)}`
-    detail = `About ${days} day${days === 1 ? '' : 's'} left, by the node’s estimate${batchLabel ? ` for “${batchLabel}”` : ''}.`
+    headline = `Paid until about ${formatDate(term.paidUntil!)}`
+    detail = `About ${days} day${days === 1 ? '' : 's'} left${batchLabel ? ` on “${batchLabel}”` : ''}: your node’s estimate at today’s price, read at ${formatTime(term.asOf)}.`
   }
 
   return (

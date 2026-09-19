@@ -123,7 +123,7 @@ export function PublishPage({ status, onFlags, onPublished }: { status: Status |
                 <option value="">Pick the best usable batch for me</option>
                 {usable.map((b) => (
                   <option key={b.batchId} value={b.batchId}>
-                    {b.label || 'unlabelled'} ({short(b.batchId, 4)}), {b.term.daysLeft ?? '?'} days left
+                    {b.label || 'unlabelled'} ({short(b.batchId, 4)}), about {b.term.daysLeft ?? '?'} days left
                   </option>
                 ))}
               </select>

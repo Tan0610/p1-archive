@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api } from '../api'
 import { Note } from '../components/Bits'
-import { formatBytes, formatDate, short, tilt } from '../format'
+import { formatBytes, formatDate, formatTime, short, tilt } from '../format'
 import type { BatchSummary, Status } from '../types'
 
 export function StampsPage({ status, onChanged }: { status: Status | null; onChanged: () => Promise<void> }) {
@@ -68,9 +68,12 @@ function BatchRow({ batch, index, onChanged }: { batch: BatchSummary; index: num
         {batch.usable ? '' : 'Not usable yet.'}
       </p>
       <p style={{ margin: '0 0 12px' }}>
-        {t.paidUntil ? (
+        {t.level === 'expired' ? (
+          'This batch has run out. Nodes may already be dropping what it paid for, feed updates included.'
+        ) : t.paidUntil ? (
           <>
-            Paid until <strong>{formatDate(t.paidUntil)}</strong>, about {t.daysLeft} days from now.
+            Paid until about <strong>{formatDate(t.paidUntil)}</strong>, roughly {t.daysLeft} days from now. That is the node’s estimate at today’s price, read
+            at {formatTime(t.asOf)}.
           </>
         ) : (
           'The node did not report how long this batch lasts.'
