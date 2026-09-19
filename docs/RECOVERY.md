@@ -127,11 +127,24 @@ retrievable while its postage batch is still paid for (see `STORAGE-HONESTY.md`)
 |---|---|---|
 | CLI | `npm run recover -- <owner> <topic> --bee https://api.gateway.ethswarm.org --out recovered` | Node 22 |
 | CLI, by address | `npm run recover -- --manifest <archive address>` | Node 22 |
-| Browser | open `reader/recover.html` (works from `file://`), paste owner + topic | a browser |
+| Browser | open `reader/recover.html` (works from `file://`) or `$GW/bzz/$ADDR/recover.html`, paste the address or owner + topic | a browser |
 
 The CLI writes every file plus `RECOVERY-REPORT.json` (inputs used, SHA-256 verdicts) into the
 output folder. It never reads `archive.json`, `.env`, the feed key or any local state — only
 the identifiers you pass it.
+
+## How long is it still paid for?
+
+Every edition's `catalogue.json` names its postage batch (`storage.batchId`). Ask any node or
+gateway for today's estimate:
+
+```bash
+curl -s $GW/batches | grep -o '"batchID":"<batchId>"[^}]*'    # → "batchTTL": seconds left
+```
+
+(`GET /stamps/<batchId>` only answers on the node that bought the batch.) When the TTL reaches
+zero, nodes may drop the folios **and** the feed updates, so the address stops resolving too.
+Anyone can top the batch up; see `STORAGE-HONESTY.md`.
 
 ## If no public gateway exists any more
 
