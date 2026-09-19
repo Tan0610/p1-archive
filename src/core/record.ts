@@ -145,7 +145,8 @@ ${rec.recover.cli}
 ${rec.recover.curl}
 \`\`\`
 
-3. Or open \`${rec.recover.reader}\` (a single HTML file, no install) and paste the owner and topic.
+3. Or open \`${rec.recover.reader}\` (a single HTML file, no install) and paste the address, or the owner and topic.
+   A copy travels inside every edition: ${rec.address.bzzUrl}recover.html
 
 See \`docs/RECOVERY.md\` for the byte-level description, in case every tool in this repo is gone too.
 
