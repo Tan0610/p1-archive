@@ -199,6 +199,7 @@
         return
       }
       var days = Math.floor(Number(b.batchTTL) / 86400)
+      if (days <= 7) rent.classList.add('late')
       line.textContent = 'Today, by this gateway’s own estimate at the current storage price: about ' + days + ' day' + (days === 1 ? '' : 's') +
         ' left, so paid until about ' + date(new Date(Date.now() + Number(b.batchTTL) * 1000).toISOString()) + '.'
     }).catch(function () {
