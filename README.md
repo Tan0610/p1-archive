@@ -109,6 +109,8 @@ writes that don't come from its own page.
 |---|---|
 | ![Publish screen](docs/screenshots/publish.png) | ![Recover screen](docs/screenshots/recover.png) |
 
+![The address screen after the first publish: the archive address with a QR code, the feed owner and topic, and the lamp lit by the batch's live TTL](docs/screenshots/address.png)
+
 <img src="docs/screenshots/stamps-phone.png" alt="Stamps screen at phone width, with the paid-until lamp unlit" width="260" align="right">
 
 The butter lamp at the top is the paid-until estimate. It is only lit by a batch TTL the node
