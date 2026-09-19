@@ -134,8 +134,9 @@ disk or any static host, and give it the address or owner + topic: it only fetch
 works against the public gateway. The web UI's *Recover* screen does the same.
 
 What the public gateway serves: the data. `catalogue.json` and every folio download from any
-gateway, `https://api.gateway.ethswarm.org` included (checked for this archive: 16 of 16 folios
-match their SHA-256). The HTML pages inside each edition, the gallery and its `recover.html`,
+gateway, `https://api.gateway.ethswarm.org` included (checked for this archive from a fresh
+clone: 18 of 18 folios in edition 2 match their SHA-256; see
+[`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md)). The HTML pages inside each edition, the gallery and its `recover.html`,
 open from your own Bee node, e.g. Swarm Desktop at `http://localhost:1633/bzz/<address>/`. The
 public gateway does not serve HTML for hashes it has not approved; it redirects to an approval
 form.
@@ -150,6 +151,37 @@ guessing. Strangers get the same figure without this code: each edition's galler
 serving it (`GET /batches` → `batchTTL`) and prints today's estimate next to the publish-time
 snapshot. Anyone can top up the batch whose ID is in `archive.json`. More in
 [`docs/STORAGE-HONESTY.md`](docs/STORAGE-HONESTY.md).
+
+### The watchdog: someone gets told before the rent runs out
+
+```bash
+npm run watchdog                                        # ids from archive.json
+npm run watchdog -- --batch <id> [--address <ref>] [--gateway URL] [--warn-days 3] [--critical-days 1]
+```
+
+`scripts/watchdog.ts` needs no key and no node. It reads the batch's remaining TTL from the public
+gateway's `GET /batches` (the gateway has no per-batch read; the full list is about 80 KB) and
+cross-checks it against the PostageStamp contract on Gnosis Chain (`remainingBalance ÷ lastPrice`
+× 5 s blocks), which is also the fallback if the gateway is down. It then checks that
+`/bzz/<address>/catalogue.json` still answers and lists folios, and probes the feed's update chunks
+for the newest index. Exit code 0 ok, 1 warn (3 days or fewer left, or the TTL couldn't be read), 2
+critical (1 day or fewer, expired, or the address or feed no longer resolves). The pure parts are
+tested in `test/watchdog.test.ts`, including the contract function selectors.
+
+`.github/workflows/storage-watchdog.yml` runs it every day, and on demand, on GitHub Actions. It
+uses only the tracked `archive.json` and the built-in `GITHUB_TOKEN` (`issues: write`,
+`contents: read`); there are no secrets. On warn or critical it opens (or updates) one issue,
+*"Archive storage runs out in N days — top it up"*, with both ways to pay:
+
+- whoever runs the node: `npm run archive -- extend --batch <id> --days 30 --yes`;
+- anyone else, with no node and no permission: `PostageStamp.topUp(batchId, amountPerChunk)` on
+  Gnosis Chain (`0x45a1502382541Cd610CC9068e88727426b696293`, paid in xBZZ
+  `0xdBF3Ea6F5beE45c02255B2c26a16F300502F68da`). The contract has no owner check. The issue has a
+  ready `cast` recipe and today's cost.
+
+When the checks pass again, the workflow closes the issue. A critical result also fails the run, so
+GitHub's failed-workflow notification goes out as well. `.github/workflows/ci.yml` runs `npm run check` on every
+push.
 
 ## How each check is met
 
