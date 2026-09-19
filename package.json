@@ -18,6 +18,7 @@
     "ui": "vite",
     "dev": "vite",
     "make:samples": "tsx scripts/make-samples.ts",
+    "watchdog": "tsx scripts/watchdog.ts",
     "build:reader": "tsx scripts/build-reader.ts",
     "build:cli": "tsc -p tsconfig.cli.json",
     "build:web": "vite build",
