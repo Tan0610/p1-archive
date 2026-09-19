@@ -1,5 +1,43 @@
 # Eight hundred winters, one lapsed invoice
 
+> **60-second tour.** A CLI (plus a small web UI) that publishes a manuscript archive to Swarm
+> behind a feed, so there is **one address that never changes** while the contents do, and a
+> stranger can get every file back from that address alone. It says honestly how long the storage
+> is paid for, and warns before it runs out.
+>
+> **Proven live on Swarm mainnet** (19 Sept 2026, details in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md)):
+>
+> - Archive address `f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28`, unchanged
+>   across two publishes.
+> - Two editions: feed index 0 (16 folio files) and feed index 1 (18: one new leaf, one corrected
+>   note). Each index was read from the network before writing.
+> - A stranger with a fresh clone, no keys and no node recovered **18/18 files, SHA-256 verified**,
+>   from the public gateway; `--all-editions` lists both #0 and #1.
+> - Paid-until comes from the node's batch TTL (≈ 7 days at publish, about 26 Sept 2026), never a
+>   constant. A daily GitHub Actions watchdog reads it keylessly and opens a top-up issue when
+>   3 days or fewer are left.
+>
+> | Check | Where (file → function) |
+> |---|---|
+> | Content behind a feed; the address shown is the feed's | `src/core/feed.ts` → `ensureFeedManifest`, `src/core/publish.ts` → `publish` |
+> | Owner and topic in a tracked, copyable file | `archive.json`, `PUBLISHED.md` ← `src/core/record.ts` → `writeArchiveJson`, `writePublishedMd` |
+> | Next feed index read from the network before every write | `src/core/feed.ts` → `resolveNextIndex`, `publishToFeed` |
+> | Content larger than a chunk uploaded separately; the feed gets its reference | `src/core/collection.ts` → `uploadCollection`; `uploadReference` in `publishToFeed` |
+> | Recovery from published identifiers only | `src/recover/recover.ts` → `recover`, `findFeedHead` (no imports from the publisher) |
+> | Remaining batch lifetime from the node, surfaced | `src/core/stamps.ts` → `describeBatch`; `src/core/ttl.ts` → `honestSentence`; `scripts/watchdog.ts` |
+> | Defined first-run behaviour for an empty feed | `src/core/feed.ts` → `resolveNextIndex`; `src/recover/recover.ts` → `findFeedHead` |
+> | No secrets in tracked files | `scripts/check-secrets.ts` (part of `npm run check`) |
+>
+> Line-level detail: [How each check is met](#how-each-check-is-met).
+>
+> **Verify it yourself, no keys needed:**
+>
+> ```bash
+> npm ci && npm run recover -- 0xD1f310B6E40a5a52Cde5Db122415b609EA0E6408 86cbe92d33d89dc878e0991ed53a92aa27905b4e21fee1a78c64683eab73f415 --all-editions
+> curl -s https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/catalogue.json
+> npm run watchdog        # remaining storage time, address and feed, read from public endpoints
+> ```
+
 In a stone vault above the Spiti valley, birch-bark folios have survived eight hundred winters.
 Tsering spent two of them photographing eleven thousand pages. The photographs then nearly died
 in six years, because the cloud account they lived in stopped being paid for.
