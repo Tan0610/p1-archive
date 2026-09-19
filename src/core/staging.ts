@@ -7,7 +7,8 @@ import { honestSentence, type StorageTerm } from './ttl.js'
 /**
  * Every edition is self-describing. The folder we upload contains:
  *
- *   index.html      the gallery — opens straight from /bzz/<archive address>/
+ *   index.html      the gallery — opens from /bzz/<archive address>/ on a Bee node
+ *                   (public gateways redirect HTML for unapproved hashes; data is fine)
  *   catalogue.json  titles, sizes and SHA-256 of every folio
  *   recover.html    the zero-dependency reader, so the archive carries its own way out
  *   ABOUT.txt       plain-text instructions for a stranger
@@ -62,9 +63,13 @@ HOW TO FIND THE NEWEST EDITION
     feed owner : ${c.feed.owner}
     feed topic : ${c.feed.topic}   ("${c.feed.topicString}")
     manifest   : ${c.feed.feedManifest}
-  Open  https://<any-swarm-gateway>/bzz/<manifest>/  for the latest edition
-  (e.g. https://api.gateway.ethswarm.org), or open recover.html in this folder
-  and paste the owner and topic, or the manifest.
+  The data comes from any Swarm gateway (e.g. https://api.gateway.ethswarm.org):
+    GET /bzz/<manifest>/catalogue.json, then every path it lists.
+  The HTML pages (the index.html gallery, recover.html) open from your own Bee
+  node, e.g. Swarm Desktop: http://localhost:1633/bzz/<manifest>/
+  The public gateway redirects HTML for unapproved hashes to an approval form.
+  recover.html saved to disk works against the public gateway: open it and
+  paste the owner and topic, or the manifest.
 
 BY HAND, IF EVERY TOOL IS GONE
   topic       = the 32 bytes above (keccak256 of the topic text)
