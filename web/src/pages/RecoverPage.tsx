@@ -25,13 +25,16 @@ type SealState = 'wait' | 'ok' | 'bad' | 'missing'
  * not ask the local server for anything — only what you type goes in.
  */
 export function RecoverPage({ status }: { status: Status | null }) {
+  const [mode, setMode] = useState<'address' | 'feed'>('address')
+  const [address, setAddress] = useState('')
   const [owner, setOwner] = useState('')
   const [topic, setTopic] = useState('')
   const [gateway, setGateway] = useState(DEFAULT_GATEWAY)
   const [beads, setBeads] = useState<Bead[]>([])
   const [message, setMessage] = useState<{ text: string; bad?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
-  const [found, setFound] = useState<{ reference: string; index: bigint; catalogue: LiteCatalogue } | null>(null)
+  /** `index` is null when the gateway followed the feed for us (address mode). */
+  const [found, setFound] = useState<{ reference: string; index: bigint | null; catalogue: LiteCatalogue } | null>(null)
   const [seals, setSeals] = useState<Record<string, SealState>>({})
 
   async function find(e: React.FormEvent) {
@@ -40,9 +43,18 @@ export function RecoverPage({ status }: { status: Status | null }) {
     setFound(null)
     setSeals({})
     setBeads([])
-    setMessage({ text: 'Asking the network which feed updates exist…' })
     const gw = gateway.trim().replace(/\/+$/, '')
     try {
+      if (mode === 'address') {
+        const ref = address.trim().replace(/^0x/i, '')
+        if (!/^[0-9a-f]{64}$/i.test(ref)) throw new Error('An archive address is 64 hex characters.')
+        setMessage({ text: 'Opening the address; the gateway follows the feed to the newest edition…' })
+        const catalogue = await fetchCatalogue(gw, ref)
+        setFound({ reference: ref, index: null, catalogue })
+        setMessage({ text: `The address opens the edition published ${formatDate(catalogue.publishedAt)}. ${catalogue.folios.length} files listed.` })
+        return
+      }
+      setMessage({ text: 'Asking the network which feed updates exist…' })
       const o = normalizeOwner(owner)
       const t = normalizeTopic(topic)
       const probed: bigint[] = []
@@ -96,20 +108,40 @@ export function RecoverPage({ status }: { status: Status | null }) {
       <div className="content">
         <h1>Get it back, as a stranger</h1>
         <p className="lede">
-          Pretend the app is deleted. Type the feed owner and topic someone handed you, and this page finds the newest edition and checks every file, using only
-          a public gateway.
+          Pretend the app is deleted. Type the one address someone handed you, or the feed owner and topic behind it. This page finds the newest edition and
+          checks every file, using only a public gateway.
         </p>
 
         <form className="box section" onSubmit={find}>
           <div style={{ display: 'grid', gap: 14 }}>
-            <label className="field">
-              Feed owner <small>0x followed by 40 hex characters</small>
-              <input className="mono" value={owner} onChange={(e) => setOwner(e.target.value)} spellCheck={false} placeholder="0x…" required />
-            </label>
-            <label className="field">
-              Feed topic <small>64 hex characters, or the topic text</small>
-              <input className="mono" value={topic} onChange={(e) => setTopic(e.target.value)} spellCheck={false} required />
-            </label>
+            <fieldset className="given">
+              <legend>What were you handed?</legend>
+              <label>
+                <input type="radio" name="given" checked={mode === 'address'} onChange={() => setMode('address')} />
+                <span>one address</span>
+              </label>
+              <label>
+                <input type="radio" name="given" checked={mode === 'feed'} onChange={() => setMode('feed')} />
+                <span>an owner and a topic</span>
+              </label>
+            </fieldset>
+            {mode === 'address' ? (
+              <label className="field">
+                Archive address <small>the feed manifest, 64 hex characters</small>
+                <input className="mono" value={address} onChange={(e) => setAddress(e.target.value)} spellCheck={false} required />
+              </label>
+            ) : (
+              <>
+                <label className="field">
+                  Feed owner <small>0x followed by 40 hex characters</small>
+                  <input className="mono" value={owner} onChange={(e) => setOwner(e.target.value)} spellCheck={false} placeholder="0x…" required />
+                </label>
+                <label className="field">
+                  Feed topic <small>64 hex characters, or the topic text</small>
+                  <input className="mono" value={topic} onChange={(e) => setTopic(e.target.value)} spellCheck={false} required />
+                </label>
+              </>
+            )}
             <label className="field">
               Gateway <small>any Bee node or public gateway</small>
               <input className="mono" value={gateway} onChange={(e) => setGateway(e.target.value)} spellCheck={false} />
@@ -124,6 +156,7 @@ export function RecoverPage({ status }: { status: Status | null }) {
                 type="button"
                 className="btn small quiet"
                 onClick={() => {
+                  setAddress(status.archive!.address.feedManifest)
                   setOwner(status.archive!.feed.owner)
                   setTopic(status.archive!.feed.topic)
                 }}
@@ -181,7 +214,9 @@ export function RecoverPage({ status }: { status: Status | null }) {
               ))}
             </ul>
             <p className="hash" style={{ marginTop: 16 }}>
-              edition reference {found.reference}, feed update {found.index.toString()}, owner {bytesToHex(normalizeOwner(owner))}
+              {found.index === null
+                ? `archive address ${found.reference}, feed owner ${found.catalogue.feed.owner}, topic ${found.catalogue.feed.topic}`
+                : `edition reference ${found.reference}, feed update ${found.index.toString()}, owner ${bytesToHex(normalizeOwner(owner))}`}
             </p>
           </div>
         )}

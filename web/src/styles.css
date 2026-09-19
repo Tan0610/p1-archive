@@ -426,6 +426,52 @@ p {
   accent-color: var(--cinnabar);
 }
 
+/* "What were you handed?" — two paper slips; the chosen one is inked and pinned. */
+.given {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.given legend {
+  float: left;
+  margin-right: 4px;
+  font-family: var(--hand);
+  font-size: 1.3rem;
+  color: var(--lapis);
+}
+.given label {
+  position: relative;
+  cursor: pointer;
+}
+.given input {
+  position: absolute;
+  opacity: 0;
+}
+.given span {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 1.5px dashed var(--rule);
+  border-radius: var(--pill);
+  background: transparent;
+  transform: rotate(-0.6deg);
+}
+.given label:nth-of-type(2) span {
+  transform: rotate(0.5deg);
+}
+.given input:checked + span {
+  border: 1.5px solid var(--soot);
+  background: var(--paper);
+  box-shadow: 2px 2px 0 var(--soot);
+}
+.given input:focus-visible + span {
+  outline: 2px solid var(--lapis);
+  outline-offset: 2px;
+}
+
 /* ---------- cards that are not all the same card ---------- */
 .slip {
   background: var(--paper);
