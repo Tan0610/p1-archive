@@ -223,7 +223,7 @@ export function RecoverPage({ status }: { status: Status | null }) {
       </div>
 
       <aside className="margin" aria-label="Notes">
-        <Note ink="lapis">each bead is one question to the network: does update number i exist?</Note>
+        <Note ink="lapis">given an owner and topic, each bead is one question to the network: does update number i exist?</Note>
         <Note ink="soot">this screen uses the same reader as recover.html, which ships inside every edition.</Note>
         <Note ink="cinnabar">new editions can take a few minutes to reach the public gateway.</Note>
       </aside>
