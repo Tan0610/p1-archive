@@ -105,7 +105,7 @@ npm run ui           # dev UI with hot reload on http://localhost:5173
 Buying, topping up and publishing each need an explicit confirmation, and the server refuses
 writes that don't come from its own page.
 
-| Publish: the folios on the desk, then a rehearsal before anything is paid for | Recover as a stranger: owner, topic, gateway, nothing else |
+| Publish: the folios on the desk, then a rehearsal before anything is paid for | Recover as a stranger: the one address (or owner + topic) and a gateway, nothing else |
 |---|---|
 | ![Publish screen](docs/screenshots/publish.png) | ![Recover screen](docs/screenshots/recover.png) |
 
@@ -127,7 +127,8 @@ edition's manifest), verifies each SHA-256, and writes `RECOVERY-REPORT.json`. I
 `src/recover/`, is not allowed to import anything from the publisher — a test and an ESLint rule
 enforce that.
 
-No Node? Open `reader/recover.html` in a browser, or `https://api.gateway.ethswarm.org/bzz/<address>/`.
+No Node? Open `reader/recover.html` in a browser (it takes the address, or owner + topic), or
+`https://api.gateway.ethswarm.org/bzz/<address>/`. The web UI's *Recover* screen does the same.
 
 ## How long is it paid for?
 
@@ -135,19 +136,21 @@ Swarm storage is prepaid rent: a postage batch drains every block, and when it i
 drop what it paid for — **including the feed updates, so the address goes quiet too**. Every
 "paid until" in this project is the node's own batch TTL (`bee.stamp.get(id).duration`), shown
 with the time it was read; when the node doesn't answer the tool says *unknown* rather than
-guessing. Anyone can top up the batch whose ID is in `archive.json`. More in
+guessing. Strangers get the same figure without this code: each edition's gallery asks the gateway
+serving it (`GET /batches` → `batchTTL`) and prints today's estimate next to the publish-time
+snapshot. Anyone can top up the batch whose ID is in `archive.json`. More in
 [`docs/STORAGE-HONESTY.md`](docs/STORAGE-HONESTY.md).
 
 ## How each check is met
 
 | # | Check | Where in the code |
 |---|---|---|
-| 1 | Content published behind a feed; the address shown is the feed's | `src/core/feed.ts:127` `ensureFeedManifest` → `bee.feed.createManifest(batchId, topic, owner)`; `src/core/publish.ts:164` returns it as `archiveAddress`; CLI prints it as "ARCHIVE ADDRESS" (`src/cli/index.ts:150`); UI *The address* (`web/src/pages/AddressPage.tsx`). The edition's collection reference is only ever labelled a snapshot |
+| 1 | Content published behind a feed; the address shown is the feed's | `src/core/feed.ts:127` `ensureFeedManifest` → `bee.feed.createManifest(batchId, topic, owner)`; `src/core/publish.ts:164` returns it as `archiveAddress`; CLI prints it as "ARCHIVE ADDRESS" (`src/cli/index.ts:153`); UI *The address* (`web/src/pages/AddressPage.tsx`). The edition's collection reference is only ever labelled a snapshot |
 | 2 | Feed owner and topic in a tracked, copyable file | `archive.json` (`feed.owner`, `feed.topic`, `address.feedManifest`) and `PUBLISHED.md` (owner and topic each in their own code block), written by `src/core/record.ts:60` `writeArchiveJson` and `:90` `writePublishedMd` from `publish.ts:237`. See [The published identifiers](#the-published-identifiers-where-to-find-them) |
 | 3 | Next feed index read from the network before every update | `src/core/feed.ts:145` `publishToFeed`: `resolveNextIndex` (`:104`, `bee.feed.fetchLatestUpdate` → `feedIndexNext`; on a 404, chunk probing; then the target slot is re-read and stepped past if already taken, `:118`) runs immediately before `writer.uploadReference(batchId, collectionReference, { index: next })` (`:156`). 5xx is retried with back-off, then aborts. No literal, no counter, nothing read from `archive.json` or `.state/`. Tests: `test/feed-index.test.ts` (read-then-write order, 500 ≠ empty feed, false 404 → N+1, occupied slot stepped past). ESLint bans literal indexes in `src/` |
 | 4 | Content larger than a chunk uploaded separately; the feed gets only its reference | `src/core/collection.ts:43` `uploadCollection` → `bee.collection.upload` (whole edition folder); `publish.ts:200`→`:208` passes `uploaded.reference` to `publishToFeed`, which calls `uploadReference`. `uploadPayload` is banned by ESLint (`eslint.config.js`) and `test/guarantees.test.ts` |
 | 5 | Recovery from published identifiers only | `src/recover/main.ts` (`npm run recover -- <owner> <topic>` or `--manifest <ref>`, plus `--bee`) → `src/recover/recover.ts:145` `recover`. Reads no `.env`, `archive.json`, key or local index; the folio list comes from the edition's own `catalogue.json` and manifest. Import isolation enforced by `eslint.config.js` and `test/guarantees.test.ts`. Browser version: `reader/recover.html` |
-| 6 | Batch remaining lifetime read from the node and surfaced | `src/core/stamps.ts:41` `describeBatch` → `bee.stamp.get(id)`; `summarise` (`:21`) uses the node's `duration` (batchTTL) → `src/core/ttl.ts` `termFromTtlSeconds`/`honestSentence`. Shown by CLI `status`/`stamps`/`publish`, the UI lamp, and written to `archive.json.storage`, `PUBLISHED.md` and each edition's `catalogue.json` (`publish.ts:225` re-reads it live before writing). Unknown → says "unknown", never a constant |
+| 6 | Batch remaining lifetime read from the node and surfaced | `src/core/stamps.ts:41` `describeBatch` → `bee.stamp.get(id)`; `summarise` (`:21`) uses the node's `duration` (batchTTL) → `src/core/ttl.ts` `termFromTtlSeconds`/`honestSentence`. Shown by CLI `status`/`stamps`/`publish`, the UI lamp, and written to `archive.json.storage`, `PUBLISHED.md` and each edition's `catalogue.json` (`publish.ts:225` re-reads it live before writing). Strangers see it live too: each edition's gallery asks its gateway (`templates/gallery.html` `liveTerm`, `GET /batches`). Unknown → says "unknown", never a constant |
 | 7 | Reading a feed with no updates has defined first-run behaviour | `src/core/feed.ts:104` `resolveNextIndex`, first-run guard at `:111`: HTTP 404 → index 0, `firstRun: true`, but only if update #0 is absent when read directly as a chunk (`:113`). Bee 2.8 also answers 404 when the lookup fails, so if #0 exists the real head is found by probing chunks (`src/shared/feed-probe.ts`). Any other error is retried, then aborts rather than guessing. `readFeedHead` (`:181`) → `{ empty: true }` under the same guard. `src/recover/recover.ts:113` `findFeedHead` (same check, #0 read with retries) → status `empty-feed` (`:201`), exit code 2. `reader/swarm-lite.js:258` `findLatestIndex` never uses the lookup; #0 absent after retries → `-1n` → "no updates yet" |
 | 8 | No secrets in tracked files | Feed key only in gitignored `.secrets/feed-key.hex` or `.env` (`src/core/signer.ts`); `.env.example` has an empty key; test keys are generated with `randomBytes` at runtime; `scripts/check-secrets.ts` (`npm run check:secrets`) scans every committable file and runs in `npm run check`. Bought batch ids are saved to the gitignored `.state/last-batch.txt` (`src/core/local-state.ts`) before waiting for them to become usable (`src/core/stamps.ts:76` `buyBatch` → `:116` `waitUntilUsable`) |
 
