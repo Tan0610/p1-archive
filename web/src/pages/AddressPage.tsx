@@ -7,7 +7,8 @@ import type { Status } from '../types'
 export function AddressPage({ status }: { status: Status | null }) {
   const archive = status?.archive
   const [qr, setQr] = useState<string | null>(null)
-  const url = archive?.address.bzzUrl ?? ''
+  // The QR holds the address itself, not a gateway URL: public gateways redirect the gallery's HTML to an approval form.
+  const url = archive?.address.feedManifest ?? ''
 
   useEffect(() => {
     if (!url) return
@@ -34,6 +35,7 @@ export function AddressPage({ status }: { status: Status | null }) {
   }
 
   const head = status?.head
+  const galleryUrl = `${(status?.beeUrl ?? 'http://localhost:1633').replace(/\/+$/, '')}/bzz/${archive.address.feedManifest}/`
   const recoverCmd = `npm run recover -- ${archive.feed.owner} ${archive.feed.topic}`
 
   return (
@@ -41,7 +43,8 @@ export function AddressPage({ status }: { status: Status | null }) {
       <div className="content">
         <h1>The address to hand out</h1>
         <p className="lede">
-          Give someone this, and they can get every folio back without this app, this computer or you. It opens the newest edition in any Swarm gateway.
+          Give someone this, and they can get every folio back without this app, this computer or you. Any Swarm gateway serves the newest edition's files; its
+          gallery page opens through a Bee node such as Swarm Desktop, since the public gateway holds back HTML for hashes it has not approved.
         </p>
 
         <div className="plate">
@@ -53,14 +56,23 @@ export function AddressPage({ status }: { status: Status | null }) {
               </p>
               <div className="row">
                 <CopyButton text={archive.address.feedManifest} label="Copy address" className="btn small" />
-                <a className="btn small quiet" href={archive.address.bzzUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                  Open in the public gateway
+                <a className="btn small quiet" href={galleryUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                  Open the gallery on your node
+                </a>
+                <a
+                  className="btn small quiet"
+                  href={`${archive.address.bzzUrl}catalogue.json`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Catalogue on the public gateway
                 </a>
               </div>
             </div>
             {qr && (
               <div className="qr">
-                <img src={qr} alt={`QR code for ${archive.address.bzzUrl}`} />
+                <img src={qr} alt="QR code for the archive address" />
               </div>
             )}
           </div>
