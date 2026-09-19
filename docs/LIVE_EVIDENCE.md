@@ -91,6 +91,13 @@ still retrievable:
 correction. So the same address served the old contents, then the new ones, and the old edition is
 still there by its snapshot reference.
 
+The one address alone works too. Re-run later on 19 Sept 2026 against the public gateway:
+`npm run recover -- --manifest f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28`
+→ `resolvedVia: feed-manifest`, `COMPLETE: 18/18 files verified by SHA-256`. In a browser,
+`reader/recover.html` opened from disk with the owner and topic and `https://api.gateway.ethswarm.org`
+reported "Newest edition is update #1" and "18 of 18 files match"
+([screenshot](screenshots/reader-verified.png)).
+
 ## Public gateway URLs
 
 Data, served by the public gateway (checked: HTTP 200, 7 236 bytes):
