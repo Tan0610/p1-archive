@@ -1,0 +1,35 @@
+{
+  "schema": "himalayan-archive/1",
+  "title": "The Spiti Folios — scans by Tsering",
+  "feed": {
+    "owner": "0xD1f310B6E40a5a52Cde5Db122415b609EA0E6408",
+    "topic": "86cbe92d33d89dc878e0991ed53a92aa27905b4e21fee1a78c64683eab73f415",
+    "topicString": "tsering/himalayan-manuscripts/v1",
+    "type": "sequence"
+  },
+  "address": {
+    "feedManifest": "f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28",
+    "bzzUrl": "https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/",
+    "cid": "bah5qcgza6ut53dll4ygg7asct6x6juntp2fm2j32vijiisreos627opnjmua"
+  },
+  "latestEdition": {
+    "collectionReference": "9caa421859e4cac9ab1ad481fb128fd45ad8000d9ecc2757ae6fb9a65c1a50da",
+    "publishedAtIndex": "0",
+    "publishedAt": "2026-09-19T05:46:15.567Z",
+    "fileCount": 20,
+    "bytes": 198642
+  },
+  "storage": {
+    "batchId": "bb1f753edc43cbdc457984ceb2fb2b1b7995489f9dfdd07525b4d7ef243d4c97",
+    "ttlSecondsAtPublish": 604550,
+    "paidUntil": "2026-09-26T05:42:05.566Z",
+    "asOf": "2026-09-19T05:46:15.566Z",
+    "source": "bee-node",
+    "note": "Paid until about 26 Sept 2026 (≈ 6 days), the node's estimate at today's storage price as of 19 Sept 2026. After that, Swarm nodes may delete these folios — and the feed updates that point at them — unless someone tops up the batch. Run `npm run archive -- status` for the live figure."
+  },
+  "recover": {
+    "cli": "npm run recover -- 0xD1f310B6E40a5a52Cde5Db122415b609EA0E6408 86cbe92d33d89dc878e0991ed53a92aa27905b4e21fee1a78c64683eab73f415 --bee https://api.gateway.ethswarm.org --out recovered",
+    "curl": "curl -s https://api.gateway.ethswarm.org/bzz/f527dd8d6be60c6f82429fafe4d1b37e8acd277aaa12844a2474bdafb9ed4b28/catalogue.json",
+    "reader": "reader/recover.html"
+  }
+}
