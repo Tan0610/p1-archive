@@ -50,8 +50,8 @@ first edition published, so they are not invented here: until then `archive.json
 | **`archive` CLI** | check the node, buy/top up postage, publish a new edition behind the feed, read live status |
 | **Scriptorium** (web UI) | the same, with a paid-until lamp that is only ever lit by a number from your node |
 | **`recover`** | gets every file back from *owner + topic* (or the address) and a Bee endpoint — nothing else |
-| **`reader/recover.html`** | one self-contained HTML file doing the same in any browser, even from `file://` |
-| **`templates/gallery.html`** | shipped inside every edition, so `/bzz/<address>/` is a browsable archive with checksums |
+| **`reader/recover.html`** | one self-contained HTML file doing the same in any browser, even from `file://`; it only fetches data, so it works against the public gateway |
+| **`templates/gallery.html`** | shipped inside every edition, so `/bzz/<address>/` on a Bee node (e.g. Swarm Desktop) is a browsable archive with checksums |
 | **`docs/RECOVERY.md`** | the byte-level recipe, for when every tool here is gone too |
 
 ## Before you start
@@ -129,8 +129,16 @@ edition's manifest), verifies each SHA-256, and writes `RECOVERY-REPORT.json`. I
 `src/recover/`, is not allowed to import anything from the publisher — a test and an ESLint rule
 enforce that.
 
-No Node? Open `reader/recover.html` in a browser (it takes the address, or owner + topic), or
-`https://api.gateway.ethswarm.org/bzz/<address>/`. The web UI's *Recover* screen does the same.
+This CLI is the canonical route. No Node? Open `reader/recover.html` in a browser, straight from
+disk or any static host, and give it the address or owner + topic: it only fetches data, so it
+works against the public gateway. The web UI's *Recover* screen does the same.
+
+What the public gateway serves: the data. `catalogue.json` and every folio download from any
+gateway, `https://api.gateway.ethswarm.org` included (checked for this archive: 16 of 16 folios
+match their SHA-256). The HTML pages inside each edition, the gallery and its `recover.html`,
+open from your own Bee node, e.g. Swarm Desktop at `http://localhost:1633/bzz/<address>/`. The
+public gateway does not serve HTML for hashes it has not approved; it redirects to an approval
+form.
 
 ## How long is it paid for?
 
@@ -138,7 +146,7 @@ Swarm storage is prepaid rent: a postage batch drains every block, and when it i
 drop what it paid for — **including the feed updates, so the address goes quiet too**. Every
 "paid until" in this project is the node's own batch TTL (`bee.stamp.get(id).duration`), shown
 with the time it was read; when the node doesn't answer the tool says *unknown* rather than
-guessing. Strangers get the same figure without this code: each edition's gallery asks the gateway
+guessing. Strangers get the same figure without this code: each edition's gallery asks the node
 serving it (`GET /batches` → `batchTTL`) and prints today's estimate next to the publish-time
 snapshot. Anyone can top up the batch whose ID is in `archive.json`. More in
 [`docs/STORAGE-HONESTY.md`](docs/STORAGE-HONESTY.md).
@@ -176,6 +184,9 @@ against bee-js, prove the feed index is read from the network immediately before
   choose: it reads the index and passes it explicitly.
 - The public gateway refuses Swarm's custom request headers from browsers and sometimes answers
   500 for a missing chunk; the browser reader uses plain GETs and retries.
+- The public gateway serves an archive's data but redirects its HTML (gallery, in-edition
+  `recover.html`) to an approval form unless the hash has been approved. Use your own node for the
+  HTML, or the repository's `reader/recover.html`, which only fetches data.
 - New editions can take a few minutes to become visible through the public gateway.
 - One feed key, one publisher. If the key is lost, the address can't move to a new edition; the
   existing editions stay readable while paid for.

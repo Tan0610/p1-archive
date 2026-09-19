@@ -31,8 +31,10 @@ curl -sO $GW/bzz/$ADDR/folios/f001-medical-compendium-12r.svg
 sha256sum f001-medical-compendium-12r.svg         # compare with catalogue.json
 ```
 
-Or just open `$GW/bzz/$ADDR/` in a browser: every edition carries its own gallery page
-(`index.html`) and a copy of the stand-alone reader (`recover.html`).
+Every edition also carries its own gallery page (`index.html`) and a copy of the stand-alone
+reader (`recover.html`). Those are HTML: open `/bzz/$ADDR/` through your own Bee node (e.g.
+Swarm Desktop, `http://localhost:1633/bzz/$ADDR/`). The public gateway serves the data above but
+redirects HTML for hashes it has not approved to an approval form.
 
 ## Route 2 — with the owner and topic, from first principles
 
@@ -125,9 +127,10 @@ retrievable while its postage batch is still paid for (see `STORAGE-HONESTY.md`)
 
 | Tool | Command | Needs |
 |---|---|---|
-| CLI | `npm run recover -- <owner> <topic> --bee https://api.gateway.ethswarm.org --out recovered` | Node 22 |
+| CLI (canonical) | `npm run recover -- <owner> <topic> --bee https://api.gateway.ethswarm.org --out recovered` | Node 22 |
 | CLI, by address | `npm run recover -- --manifest <archive address>` | Node 22 |
-| Browser | open `reader/recover.html` (works from `file://`) or `$GW/bzz/$ADDR/recover.html`, paste the address or owner + topic | a browser |
+| Browser | open `reader/recover.html` from disk (`file://`) or any static host, paste the address or owner + topic; it only fetches data, so the public gateway works | a browser |
+| Browser, in-edition copy | `/bzz/$ADDR/recover.html` through your own Bee node (HTML: the public gateway redirects it to an approval form) | a Bee node |
 
 The CLI writes every file plus `RECOVERY-REPORT.json` (inputs used, SHA-256 verdicts) into the
 output folder. It never reads `archive.json`, `.env`, the feed key or any local state — only

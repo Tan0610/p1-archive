@@ -22,7 +22,7 @@ Every figure is read from a Bee node at the moment you look. Nothing is a consta
 | Web UI lamp (top right) | flame height and date | same, refreshed every 30 s |
 | `archive.json` / `PUBLISHED.md` | snapshot at publish time, with its `asOf` date | same, recorded when writing |
 | `catalogue.json` inside each edition | snapshot at publish time | same |
-| The gallery inside each edition (`/bzz/<address>/`) | the snapshot, plus today's figure | the serving gateway's `GET /batches` → `batchTTL` |
+| The gallery inside each edition (`/bzz/<address>/` on a Bee node) | the snapshot, plus today's figure | the serving node's `GET /batches` → `batchTTL` |
 
 If the node cannot be reached, the tool says **unknown** instead of guessing.
 
