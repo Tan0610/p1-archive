@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BatchId, Duration, Size, type PostageBatch } from '@ethersphere/bee-js'
 import { pickUsableBatch, summarise } from '../src/core/stamps.js'
-import { honestSentence, termFromTtlSeconds } from '../src/core/ttl.js'
+import { approxDays, honestSentence, humanDuration, termFromTtlSeconds } from '../src/core/ttl.js'
 
 const NOW = new Date('2026-09-19T00:00:00Z')
 
@@ -49,6 +49,28 @@ describe('storage term comes from the node', () => {
     expect(t.level).toBe('unknown')
     expect(t.paidUntil).toBeNull()
     expect(honestSentence(t)).toMatch(/unknown: no postage batch chosen yet/)
+  })
+
+  it('rounds the days it shows to the nearest day, so a fresh 7-day batch reads "7 days"', () => {
+    // 604_550 s is what the node reported for a 7-day batch a few minutes after purchase.
+    expect(humanDuration(604_550)).toBe('7 days')
+    expect(honestSentence(termFromTtlSeconds(604_550, NOW))).toMatch(/\(≈ 7 days\)/)
+    expect(humanDuration(6.4 * 86_400)).toBe('6 days')
+    expect(humanDuration(6.5 * 86_400)).toBe('7 days')
+    expect(approxDays(604_550)).toBe(7)
+  })
+
+  it('keeps the urgency grade on whole days left, never rounding up', () => {
+    const t = termFromTtlSeconds(604_550, NOW)
+    expect(t.daysLeft).toBe(6)
+    expect(t.level).toBe('urgent')
+  })
+
+  it('uses hours and minutes for short terms, singular when there is one', () => {
+    expect(humanDuration(36 * 3600)).toBe('36 hours')
+    expect(humanDuration(3600)).toBe('1 hour')
+    expect(humanDuration(10)).toBe('1 minute')
+    expect(humanDuration(45 * 60)).toBe('45 minutes')
   })
 
   it('says what happens at the end, not just the date', () => {

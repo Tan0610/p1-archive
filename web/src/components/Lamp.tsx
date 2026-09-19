@@ -1,5 +1,5 @@
 import type { StorageTerm } from '../types'
-import { formatDate, formatTime } from '../format'
+import { formatDate, formatTime, shownDays } from '../format'
 
 /**
  * A butter lamp whose flame is the paid storage left. It is only ever lit by a
@@ -7,7 +7,7 @@ import { formatDate, formatTime } from '../format'
  */
 export function Lamp({ term, batchLabel }: { term: StorageTerm | null; batchLabel?: string }) {
   const known = term && term.level !== 'unknown' && term.daysLeft !== null && term.paidUntil
-  const days = known ? term.daysLeft! : 0
+  const days = known ? (shownDays(term) ?? 0) : 0
   const flame = known ? Math.max(0.2, Math.min(1, days / 60)) : 0
   const level = term?.level ?? 'unknown'
 

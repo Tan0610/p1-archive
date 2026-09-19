@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, publishStream } from '../api'
 import { Note } from '../components/Bits'
-import { formatBytes, short, tilt } from '../format'
+import { formatBytes, short, shownDays, tilt } from '../format'
 import type { Folio, PublishEvent, PublishResult, Status, StepId } from '../types'
 
 type FlagState = { done: Set<StepId>; failed: boolean }
@@ -123,7 +123,7 @@ export function PublishPage({ status, onFlags, onPublished }: { status: Status |
                 <option value="">Pick the best usable batch for me</option>
                 {usable.map((b) => (
                   <option key={b.batchId} value={b.batchId}>
-                    {b.label || 'unlabelled'} ({short(b.batchId, 4)}), about {b.term.daysLeft ?? '?'} days left
+                    {b.label || 'unlabelled'} ({short(b.batchId, 4)}), about {shownDays(b.term) ?? '?'} days left
                   </option>
                 ))}
               </select>

@@ -55,10 +55,21 @@ export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/**
+ * Days to show a person, rounded to the nearest whole day: 6.998 days reads as
+ * "7 days", not "6". (`daysLeft` stays floored: it grades urgency, and rounding
+ * up there would make a batch look safer than it is.)
+ */
+export function approxDays(seconds: number): number {
+  return Math.round(seconds / 86_400)
+}
+
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`
+
 export function humanDuration(seconds: number): string {
-  if (seconds < 3600) return `${Math.max(1, Math.round(seconds / 60))} minutes`
-  if (seconds < 86_400 * 2) return `${Math.round(seconds / 3600)} hours`
-  return `${Math.floor(seconds / 86_400)} days`
+  if (seconds < 3600) return plural(Math.max(1, Math.round(seconds / 60)), 'minute')
+  if (seconds < 86_400 * 2) return plural(Math.round(seconds / 3600), 'hour')
+  return plural(approxDays(seconds), 'day')
 }
 
 /** One honest sentence for CLI / UI / generated files. */

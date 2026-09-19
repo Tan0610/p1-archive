@@ -1,3 +1,11 @@
+/**
+ * Days left to show a person, rounded to the nearest day (6.998 → 7). The
+ * term's `daysLeft` is floored because it grades urgency; it is not for display.
+ */
+export function shownDays(term: { ttlSeconds: number | null; daysLeft: number | null }): number | null {
+  return term.ttlSeconds === null ? term.daysLeft : Math.round(term.ttlSeconds / 86_400)
+}
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }

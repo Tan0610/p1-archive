@@ -198,8 +198,9 @@
         rent.classList.add('late')
         return
       }
-      var days = Math.floor(Number(b.batchTTL) / 86400)
-      if (days <= 7) rent.classList.add('late')
+      var ttl = Number(b.batchTTL)
+      var days = Math.round(ttl / 86400) // shown: 6.998 days reads "7"
+      if (Math.floor(ttl / 86400) <= 7) rent.classList.add('late') // graded on whole days, never rounded up
       line.textContent = 'Today, by this gateway’s own estimate at the current storage price: about ' + days + ' day' + (days === 1 ? '' : 's') +
         ' left, so paid until about ' + date(new Date(Date.now() + Number(b.batchTTL) * 1000).toISOString()) + '.'
     }).catch(function () {
